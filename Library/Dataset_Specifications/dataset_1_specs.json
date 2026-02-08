@@ -1,0 +1,15 @@
+{
+    "name": "dataset_1" ,
+    "model_name": "mjx_panda" ,
+    "num_batches": 100 ,
+    "batch_size": 500 , 
+    "step_size": 0.02 , 
+    "num_steps": 100 ,
+    "is_gravity": true , 
+    "is_fluid": false , 
+    "is_const_wind": true ,
+    "wind": "0 0 0" , 
+    "density": "1000" , 
+    "viscosity": "0.00002" ,
+    "qvel_max": [3.14 , 3.14 , 3.14 , 3.14 , 3.14 , 3.14 , 3.14 , 1 , 1]
+}

@@ -1,0 +1,206 @@
+import os
+
+import argparse
+from Core.KNODE_Modules import KNODE
+import equinox as eqx
+import grain
+
+import jax
+import jax.numpy as jnp
+import jax.random as jr
+import json
+import mujoco.mjx as mjx
+import numpy as np
+import optax
+import os
+import time
+import Utils.Data_Utils as data_utils
+import Utils.Mujoco_Utils as mj_utils
+import zarr
+
+
+
+
+"""
+ARGUMENT AND SPECIFICATION PARSING
+"""
+
+def return_Arguments():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-m" , "--model_specs" , type = str , default = "model_1")
+    parser.add_argument("-t" , "--training_specs" , type = str , default = "training_1")
+    
+    args = parser.parse_args()
+    
+    model_path = "Library/Model_Specifications/" + args.model_specs + ".json"
+    training_path = "Library/Training_Specifications/" + args.training_specs + ".json"
+        
+    return model_path , training_path
+    
+def parse_Model_Specs(path_to_model_specs):
+    with open(path_to_model_specs) as f:
+        d = json.load(f)
+    model_options = d
+    return model_options
+    
+def parse_Training_Specs(path_to_training_specs):
+    with open(path_to_training_specs) as f:
+        d = json.load(f)
+    training_options = d
+    return training_options
+
+    
+"""
+SAVING/LOADING MODEL
+"""
+
+def get_New_Name(name , *args):
+    if len(args) == 0:
+        if os.path.exists(os.getcwd() + "/Models/" + name):
+            return get_New_Name(name , 1)
+        else:
+            return name
+    else:
+        if os.path.exists(os.getcwd() + "/Models/" + name + "_" + str(args[0])):
+            return get_New_Name(name , args[0] + 1)
+        else:
+            return name + "_" + str(args[0])
+            
+
+def save_Model(model , loss_list , model_options , training_options):
+    
+    name = get_New_Name(training_options["name"])
+    save_path = os.getcwd() + "/Models/" + name
+    
+    os.makedirs(save_path)
+    
+    eqx.tree_serialise_leaves(save_path + "/model.eqx" , model)
+    
+    with open(save_path + "/model_options.json", 'w') as f:
+        json.dump(model_options, f)
+    with open(save_path + "/training_options.json", 'w') as f:
+        json.dump(training_options, f)
+    with open(save_path + "/loss_list.json", 'w') as f:
+        json.dump(loss_list, f)
+        
+        
+def load_Model_From_Options(model_options , training_options):
+    dataset_path = "Datasets/" + training_options["dataset_name"] + ".zarr"
+    root = zarr.open(dataset_path)
+    qvel_max = jnp.array(root.attrs["dataset_options"]["qvel_max"])
+    
+    model_xml = mj_utils.create_XML_From_Options(training_options)
+    mjx_model , mjx_data = mj_utils.init_mjx_model(model_xml)
+    
+    key = jr.key(int(time.time()))
+    model = KNODE(key , mjx_model , model_options["width"] , model_options["depth"] , qvel_max)
+    
+    return model , mjx_data
+    
+"""
+VISUAL AIDS
+"""
+
+def visualize_Trained_Model(model , model_options , training_options , trajectory_number):
+    root = zarr.open(os.getcwd() + "/Datasets/" + training_options["dataset_name"] + ".zarr" , mode = 'r')
+    
+    xml = root.attrs.get("xml")
+    mj_model , data = mj_utils.init_mujoco_model(xml)
+    
+    _ , mjx_data = mj_utils.init_mjx_model(xml)
+    
+    d = root["trajectory_" + str(trajectory_number)]
+    gt_qpos_traj = d["qpos"][:]
+    
+    step_size = root.attrs["dataset_options"]["step_size"]
+    num_steps = root.attrs["dataset_options"]["num_steps"]
+    ts = jnp.arange(0 , step_size*(num_steps) , step = step_size)
+    
+    init_states = {"qpos": jnp.array(d["qpos"][0 , :]) , "qvel": jnp.array(d["qvel"][0 , :])}
+    ctrl = jnp.array(d["ctrl"][0 , :])
+    
+    ml_traj = model(ts , mjx_data , init_states , ctrl)
+    ml_qpos_traj = np.array(ml_traj["qpos"])
+    
+    
+    mj_utils.visualize_GT_vs_ML_Trajectory(training_options["model_name"] , gt_qpos_traj , ml_qpos_traj)
+
+"""
+MODEL TRAINING
+"""
+
+def loss_fn(model , gt_trajs , ts):
+    pred_trajs = jax.vmap(model , (None , None , 0 , 0))(ts , mjx_data , init_state , ctrl)
+    
+
+def train_Model(model_options , training_options):
+    
+    dataset_path = "Datasets/" + training_options["dataset_name"] + ".zarr"
+    root = zarr.open(dataset_path)
+    step_size = root.attrs["dataset_options"]["step_size"]
+    num_steps = root.attrs["dataset_options"]["num_steps"]
+    ts = jnp.arange(0 , step_size*(num_steps) , step = step_size)
+    
+    model , mjx_data = load_Model_From_Options(model_options , training_options)
+    
+    optim = optax.adabelief(training_options["lr"])
+    
+    dataset = data_utils.zarr_Trajectory_Dataset(dataset_path)
+    dataset = (dataset
+               .shuffle(seed = int(time.time()))
+               .batch(batch_size = training_options["batch_size"])
+               .repeat())
+    iter_loader = iter(dataset.to_iter_dataset())
+    
+    @eqx.filter_value_and_grad
+    def grad_loss(model , ts , gt_trajs , ctrls , mjx_data , init_states):
+        pred_trajs = jax.vmap(model , (None , None , 0 , 0))(ts , mjx_data , init_states , ctrls)
+        return jnp.mean((gt_trajs["qpos"] - pred_trajs["qpos"])**2)
+    
+    @eqx.filter_jit
+    def make_step(model , ts , gt_trajs , ctrls , mjx_data):
+        init_states = {"qpos": gt_trajs["qpos"][: , 0 , :] , "qvel": gt_trajs["qvel"][: , 0 , :]}
+        loss , grads = grad_loss(model , ts , gt_trajs , ctrls , mjx_data , init_states)
+        updates , opt_states = optim.update(grads , opt_state)
+        model = eqx.apply_updates(model , updates)
+        return loss , model , opt_states
+    
+    opt_state = optim.init(eqx.filter(model , eqx.is_inexact_array))
+    
+    loss_list = []
+    
+    for batch_id in range(training_options["num_batches"]):
+        t1 = time.time()
+        gt_trajs , ctrls = next(iter_loader)
+        #ts = ts[0:3]
+        gt_trajs = {"qpos": gt_trajs["qpos"][: , : , :] , "qvel": gt_trajs["qvel"][: , : , :]}
+        loss , model , opt_state = make_step(model , ts , gt_trajs , ctrls , mjx_data)
+        
+        loss_list.append(loss.item())
+        
+        if batch_id%training_options["print_every"] == 0 or (batch_id+1)==training_options["num_batches"]:
+            print(f"Batch: {batch_id+1} of {training_options['num_batches']}. Loss: {loss}. Elapsed time: {time.time() - t1}")
+            
+    return model , loss_list
+    
+
+
+"""
+CALL MAIN FUNCTION
+"""
+
+if __name__ == "__main__":
+    model_path , training_path = return_Arguments()
+    model_options = parse_Model_Specs(model_path)
+    training_options = parse_Training_Specs(training_path)
+    model , loss_list = train_Model(model_options , training_options)
+    save_Model(model , loss_list , model_options , training_options)
+    visualize_Trained_Model(model , model_options , training_options , 0)
+    
+    
+    
+    
+    
+    
+    
+

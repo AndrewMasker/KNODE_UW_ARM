@@ -1,0 +1,3 @@
+<option wind="WIND_FLAG" density="DENSITY_FLAG" viscosity="VISCOSITY_FLAG"/>
+
+<!-- Use default WIND_.FLAG="0 0 0" DENSITY_.FLAG="1000" VISCOSITY_.FLAG="0.00002" -->
