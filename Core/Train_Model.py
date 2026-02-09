@@ -9,6 +9,7 @@ import jax
 import jax.numpy as jnp
 import jax.random as jr
 import json
+import matplotlib.pyplot as plt
 import mujoco.mjx as mjx
 import numpy as np
 import optax
@@ -83,6 +84,8 @@ def save_Model(model , loss_list , model_options , training_options):
     with open(save_path + "/loss_list.json", 'w') as f:
         json.dump(loss_list, f)
         
+    return save_path
+        
         
 def load_Model_From_Options(model_options , training_options):
     dataset_path = "Datasets/" + training_options["dataset_name"] + ".zarr"
@@ -94,6 +97,12 @@ def load_Model_From_Options(model_options , training_options):
     
     key = jr.key(int(time.time()))
     model = KNODE(key , mjx_model , model_options["width"] , model_options["depth"] , qvel_max)
+    
+    if training_options["should_load"]:
+        load_path = os.getcwd() + "/Models/" + training_options["load_name"] + "/model.eqx"
+        
+        model = eqx.tree_deserialise_leaves(load_path , model)
+        
     
     return model , mjx_data
     
@@ -124,13 +133,25 @@ def visualize_Trained_Model(model , model_options , training_options , trajector
     
     
     mj_utils.visualize_GT_vs_ML_Trajectory(training_options["model_name"] , gt_qpos_traj , ml_qpos_traj)
+    
+def plot_Loss(loss_list ):#, save_path):
+#    save_path = save_path + "/Plots"
+#    os.make_dirs(save_path)
+    
+    loss_inds = np.arange(1 , len(loss_list) + 1)
+    
+    fig , (ax1 , ax2) = plt.subplots(1 , 2)
+    
+    ax1.plot(loss_inds , loss_list)
+    ax2.loglog(loss_inds , loss_list)
+   
+    plt.show(block = False)
+    
+    
 
 """
 MODEL TRAINING
 """
-
-def loss_fn(model , gt_trajs , ts):
-    pred_trajs = jax.vmap(model , (None , None , 0 , 0))(ts , mjx_data , init_state , ctrl)
     
 
 def train_Model(model_options , training_options):
@@ -143,44 +164,47 @@ def train_Model(model_options , training_options):
     
     model , mjx_data = load_Model_From_Options(model_options , training_options)
     
-    optim = optax.adabelief(training_options["lr"])
-    
-    dataset = data_utils.zarr_Trajectory_Dataset(dataset_path)
-    dataset = (dataset
-               .shuffle(seed = int(time.time()))
-               .batch(batch_size = training_options["batch_size"])
-               .repeat())
-    iter_loader = iter(dataset.to_iter_dataset())
-    
-    @eqx.filter_value_and_grad
-    def grad_loss(model , ts , gt_trajs , ctrls , mjx_data , init_states):
-        pred_trajs = jax.vmap(model , (None , None , 0 , 0))(ts , mjx_data , init_states , ctrls)
-        return jnp.mean((gt_trajs["qpos"] - pred_trajs["qpos"])**2)
-    
-    @eqx.filter_jit
-    def make_step(model , ts , gt_trajs , ctrls , mjx_data):
-        init_states = {"qpos": gt_trajs["qpos"][: , 0 , :] , "qvel": gt_trajs["qvel"][: , 0 , :]}
-        loss , grads = grad_loss(model , ts , gt_trajs , ctrls , mjx_data , init_states)
-        updates , opt_states = optim.update(grads , opt_state)
-        model = eqx.apply_updates(model , updates)
-        return loss , model , opt_states
-    
-    opt_state = optim.init(eqx.filter(model , eqx.is_inexact_array))
-    
     loss_list = []
     
-    for batch_id in range(training_options["num_batches"]):
-        t1 = time.time()
-        gt_trajs , ctrls = next(iter_loader)
-        #ts = ts[0:3]
-        gt_trajs = {"qpos": gt_trajs["qpos"][: , : , :] , "qvel": gt_trajs["qvel"][: , : , :]}
-        loss , model , opt_state = make_step(model , ts , gt_trajs , ctrls , mjx_data)
+    for num_batches , steps_strategy , lr in zip(training_options["num_batches_strategy"] , training_options["steps_strategy"] , training_options["lr_strategy"]):
         
-        loss_list.append(loss.item())
+        dataset = data_utils.zarr_Trajectory_Dataset(dataset_path)
+        dataset = (dataset
+                   .shuffle(seed = int(time.time()))
+                   .batch(batch_size = training_options["batch_size"])
+                   .repeat())
+        iter_loader = iter(dataset.to_iter_dataset())    
         
-        if batch_id%training_options["print_every"] == 0 or (batch_id+1)==training_options["num_batches"]:
-            print(f"Batch: {batch_id+1} of {training_options['num_batches']}. Loss: {loss}. Elapsed time: {time.time() - t1}")
+        optim = optax.adam(lr)
+        opt_state = optim.init(eqx.filter(model , eqx.is_inexact_array))
+        
+        @eqx.filter_value_and_grad
+        def grad_loss(model , ts , gt_trajs , ctrls , mjx_data , init_states):
+            pred_trajs = jax.vmap(model , (None , None , 0 , 0))(ts , mjx_data , init_states , ctrls)
+            return jnp.mean((gt_trajs["qpos"] - pred_trajs["qpos"])**2) #+ jnp.mean((gt_trajs["qvel"] - pred_trajs["qvel"])**2)
+        
+        @eqx.filter_jit
+        def make_step(model , ts , gt_trajs , ctrls , mjx_data):
+            init_states = {"qpos": gt_trajs["qpos"][: , 0 , :] , "qvel": gt_trajs["qvel"][: , 0 , :]}
+            loss , grads = grad_loss(model , ts , gt_trajs , ctrls , mjx_data , init_states)
+            updates , opt_states = optim.update(grads , opt_state)
+            model = eqx.apply_updates(model , updates)
+            return loss , model , opt_states
+    
+        _num_steps = int(num_steps*steps_strategy)
+        
+        for batch_id in range(num_batches):
+            t1 = time.time()
+            gt_trajs , ctrls = next(iter_loader)
+            _ts = ts[0:_num_steps]
+            _gt_trajs = {"qpos": gt_trajs["qpos"][: , :_num_steps , :] , "qvel": gt_trajs["qvel"][: , :_num_steps , :]}
+            loss , model , opt_state = make_step(model , _ts , _gt_trajs , ctrls , mjx_data)
             
+            loss_list.append(loss.item())
+            
+            if batch_id%training_options["print_every"] == 0 or (batch_id+1)==num_batches:
+                print(f"Batch: {batch_id+1} of {num_batches}. Loss: {loss}. Elapsed time: {time.time() - t1}")
+                
     return model , loss_list
     
 
@@ -194,8 +218,10 @@ if __name__ == "__main__":
     model_options = parse_Model_Specs(model_path)
     training_options = parse_Training_Specs(training_path)
     model , loss_list = train_Model(model_options , training_options)
-    save_Model(model , loss_list , model_options , training_options)
+    save_path = save_Model(model , loss_list , model_options , training_options)
+    plot_Loss(loss_list)
     visualize_Trained_Model(model , model_options , training_options , 0)
+    plt.show()
     
     
     

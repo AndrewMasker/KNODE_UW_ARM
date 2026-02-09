@@ -1,0 +1,1 @@
+{"name": "test", "dataset_name": "dataset_1", "model_name": "mjx_panda", "batch_size": 200, "lr": 0.0005, "steps_strategy": [0.1, 0.1], "num_batches_strategy": [250, 250], "is_gravity": false, "is_fluid": false, "is_const_wind": true, "wind": "0 0 0", "density": "1000", "viscosity": "0.00002", "print_every": 5}
