@@ -24,6 +24,7 @@ def create_XML_From_Options(options):
         fluid_options_xml = fluid_options_xml.replace("DENSITY_FLAG" , options["density"])
         fluid_options_xml = fluid_options_xml.replace("VISCOSITY_FLAG" , options["viscosity"])
         model_xml = model_xml.replace("<!-- FLUID_FLAG -->" , fluid_options_xml)
+    model_xml = model_xml.replace("<!-- TIMESTEP_FLAG -->" , get_XML_From_Name("timestep_string").replace("TIMESTEP_FLAG" , options["step_size"]))
     return model_xml
 
 # This function takes a path to a txt file with the xml definition of the

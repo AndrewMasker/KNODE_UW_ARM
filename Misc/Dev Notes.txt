@@ -1,0 +1,12 @@
+9 Feb 2026:
+I updated some stuff to allow easier visualiztion. I added the ability to load a model and continue training it.
+I ended off by discovering there is some bug in my code. For whatever reason, using a model with all of the KNODE
+stuff removed does not result in the same dynamics as the ground truth data, even when they have the same xml.
+I am not sure why this is. I thought it was due to the broken down mjx forward call I use to allow reverse mode
+differentiation, but replacing it with the simple forward call also does not fix it. It could be the forward
+integration method being different than when the trajectory was created, or some conflict with using diffrax,
+but it is hard to tell. Figuring this out should be my primary objective tommorrow.
+
+10 Feb 2026:
+I figured out the bug, I had set the datset options time step to some value without actually making the sim run at
+that frequency. Things are looking decent, but I still think adding a FE would be good.

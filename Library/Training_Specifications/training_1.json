@@ -3,12 +3,12 @@
     "dataset_name": "dataset_1",
     "model_name": "mjx_panda",
     "should_load": false , 
-    "load_name": "test_14",
+    "load_name": "test",
     
     "batch_size": 200 , 
-    "lr_strategy": [0.0005 , 0.0001 , 0.0001] ,
-    "steps_strategy": [0.1 , 0.2 , 0.3] , 
-    "num_batches_strategy": [1000 , 500 , 500] ,
+    "lr_strategy": [0.0005 , 0.0001] ,
+    "steps_strategy": [1 , 1] , 
+    "num_batches_strategy": [1000 , 0] ,
     
     "is_gravity": false , 
     "is_fluid": false , 
@@ -16,6 +16,7 @@
     "wind": "0 0 0" , 
     "density": "1000" , 
     "viscosity": "0.00002" , 
+    "step_size": "0.002" ,
     
     "print_every": 5
 }

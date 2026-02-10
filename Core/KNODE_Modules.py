@@ -16,7 +16,7 @@ class Residual_Network(eqx.Module):
 
     
     def __init__(self , input_num , output_num , width , depth, qpos_ranges , qvel_max , ctrl_ranges , key):
-        self.out_scale = jnp.array(0.01)
+        self.out_scale = jnp.array(1)
         self.mlp = eqx.nn.MLP(
             in_size = input_num , 
             out_size = output_num , 
@@ -65,22 +65,20 @@ class KNODE_Dynamics(eqx.Module):
         
         mjx_data , ctrl = args
         mjx_data = mjx_data.replace(qpos = qpos , qvel = qvel , ctrl = ctrl)
-        mjx_data = mjx.forward(self.mjx_model , mjx_data)
-        qacc = mjx_data.qacc
-
-#        mjx_data = mjx.kinematics(self.mjx_model , mjx_data)
-#        mjx_data = mjx.com_pos(self.mjx_model , mjx_data)
-#        mjx_data = mjx.crb(self.mjx_model , mjx_data)
-#        mjx_data = mjx.factor_m(self.mjx_model , mjx_data)
-#        mjx_data = mjx.rne(self.mjx_model , mjx_data)
-#        mjx_data = mjx.passive(self.mjx_model , mjx_data)
-#        mjx_data = mjx.fwd_actuation(self.mjx_model , mjx_data)
-#        
-#        #mjx_data = mjx.collision(self.mjx_model , mjx_data)
-#        #mjx_data = mjx.make_constraint(self.mjx_model , mjx_data)
-#        mjx_data = mjx.fwd_acceleration(self.mjx_model , mjx_data)
-#        
+#        mjx_data = mjx.forward(self.mjx_model , mjx_data)
 #        qacc = mjx_data.qacc
+
+        mjx_data = mjx.kinematics(self.mjx_model , mjx_data)
+        mjx_data = mjx.com_pos(self.mjx_model , mjx_data)
+        mjx_data = mjx.crb(self.mjx_model , mjx_data)
+        mjx_data = mjx.factor_m(self.mjx_model , mjx_data)
+        mjx_data = mjx.rne(self.mjx_model , mjx_data)
+        mjx_data = mjx.passive(self.mjx_model , mjx_data)
+        mjx_data = mjx.fwd_actuation(self.mjx_model , mjx_data)
+        #mjx_data = mjx.collision(self.mjx_model , mjx_data)
+        #mjx_data = mjx.make_constraint(self.mjx_model , mjx_data)
+        mjx_data = mjx.fwd_acceleration(self.mjx_model , mjx_data)
+        qacc = mjx_data.qacc
         
         mjx_state_vel = jnp.concatenate((qvel , qacc))
       
@@ -89,7 +87,7 @@ class KNODE_Dynamics(eqx.Module):
 #        print(mjx_state_vel)
 #        print(res_state_vel)
         
-        final_state_vel = mjx_state_vel# @ self.mjx_mixing_matrix #+ res_state_vel @ self.res_mixing_matrix
+        final_state_vel = mjx_state_vel @ self.mjx_mixing_matrix + res_state_vel @ self.res_mixing_matrix
         final_qpos_vel , final_qvel_vel = jnp.split(final_state_vel , 2)
         
         return {"qpos": final_qpos_vel , "qvel": final_qvel_vel}
@@ -124,7 +122,7 @@ class KNODE(eqx.Module):
             dt0 = ts[1] - ts[0] , 
             y0 = init_state ,
             args = (mjx_data , ctrl) ,
-            stepsize_controller = diffrax.PIDController(rtol=1e-2, atol=1e-3) ,
+            stepsize_controller = diffrax.PIDController(rtol=1e-3, atol=1e-3) ,
             saveat = diffrax.SaveAt(ts=ts)
             )
         return solution.ys

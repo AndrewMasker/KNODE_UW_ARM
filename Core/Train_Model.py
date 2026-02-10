@@ -28,7 +28,7 @@ ARGUMENT AND SPECIFICATION PARSING
 
 def return_Arguments():
     parser = argparse.ArgumentParser()
-    parser.add_argument("-m" , "--model_specs" , type = str , default = "model_1")
+    parser.add_argument("-m" , "--model_specs" , type = str , default = "model_2")
     parser.add_argument("-t" , "--training_specs" , type = str , default = "training_1")
     
     args = parser.parse_args()
@@ -161,6 +161,8 @@ def train_Model(model_options , training_options):
     step_size = root.attrs["dataset_options"]["step_size"]
     num_steps = root.attrs["dataset_options"]["num_steps"]
     ts = jnp.arange(0 , step_size*(num_steps) , step = step_size)
+#    print(ts)
+#    poop()
     
     model , mjx_data = load_Model_From_Options(model_options , training_options)
     
@@ -220,7 +222,7 @@ if __name__ == "__main__":
     model , loss_list = train_Model(model_options , training_options)
     save_path = save_Model(model , loss_list , model_options , training_options)
     plot_Loss(loss_list)
-    visualize_Trained_Model(model , model_options , training_options , 0)
+    visualize_Trained_Model(model , model_options , training_options , 4)
     plt.show()
     
     

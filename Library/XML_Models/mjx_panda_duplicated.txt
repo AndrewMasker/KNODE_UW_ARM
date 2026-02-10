@@ -4,6 +4,8 @@
 
     <!-- GRAVITY_FLAG -->
     
+    <!-- TIMESTEP_FLAG -->
+    
     
   <compiler angle="radian" meshdir="Library/XML_Models/mjx_panda_assets" autolimits="true"/>
 
