@@ -1,1 +1,1 @@
-{"depth": 6, "width": 500, "has_bias": true}
+{"depth": 6, "width": 500, "fe_std": 1, "num_fe_features": 500}

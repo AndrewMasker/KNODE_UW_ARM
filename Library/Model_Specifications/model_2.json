@@ -1,5 +1,6 @@
 {
     "depth": 6 , 
     "width": 500 , 
-    "has_bias": true
+    "fe_std": 1 ,
+    "num_fe_features": 500
 }

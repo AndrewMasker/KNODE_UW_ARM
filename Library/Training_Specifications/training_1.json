@@ -3,12 +3,15 @@
     "dataset_name": "dataset_1",
     "model_name": "mjx_panda",
     "should_load": false , 
-    "load_name": "test",
+    "load_name": "test_12",
     
     "batch_size": 200 , 
     "lr_strategy": [0.0005 , 0.0001] ,
     "steps_strategy": [1 , 1] , 
-    "num_batches_strategy": [1000 , 0] ,
+    "num_batches_strategy": [500 , 0] ,
+    "l0": 193 , 
+    "l1": 10 , 
+    "l2": 2 , 
     
     "is_gravity": false , 
     "is_fluid": false , 

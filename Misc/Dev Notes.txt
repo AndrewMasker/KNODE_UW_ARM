@@ -10,3 +10,13 @@ but it is hard to tell. Figuring this out should be my primary objective tommorr
 10 Feb 2026:
 I figured out the bug, I had set the datset options time step to some value without actually making the sim run at
 that frequency. Things are looking decent, but I still think adding a FE would be good.
+
+11 Feb 2026:
+I made some adjustments to the loss function that allow the position and orientation to be used in conjunction to 
+generalized states. This seems to make the model better by quite a bit. I also added fourier embeddings but that
+did not make the model better, so it is all commented out at the moment. I changed the last activation from a 
+vertically scaled tanh to a diagonally scaled tanh, allowing for the scale to be increased without needing weights
+that map to the linear region to be adjusted, this also made the model better by quite a bit. I think my real next
+next order of business is to fix how I am using the eqx.field(static=True). I think this is a very large reason 
+why the models take forver to compile and trace, as this apparantly takes all of the fields marked static and bakes 
+them into the xla code. So I will have to use the partition method to make fields non trainable.

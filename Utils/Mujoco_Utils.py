@@ -68,9 +68,9 @@ def visualize_Saved_Trajectory(dataset_name , trajectory_number):
                 viewer.sync()
                 
 
-def visualize_GT_vs_ML_Trajectory(model_name , gt_qpos_traj , ml_qpos_traj):
+def visualize_GT_vs_Nominal_vs_KNODE_Trajectory(model_name , gt_qpos_traj , nominal_qpos_traj , KNODE_qpos_traj):
 
-    xml = get_XML_From_Name(model_name + "_duplicated")
+    xml = get_XML_From_Name(model_name + "_comparison")
 
     spec1 = mujoco.MjSpec.from_string(xml)
     spec2 = mujoco.MjSpec.from_string(xml)
@@ -90,19 +90,20 @@ def visualize_GT_vs_ML_Trajectory(model_name , gt_qpos_traj , ml_qpos_traj):
 #    
     model = spec1.compile()
     data = mujoco.MjData(model)
-    nq = model.nq // 2
+    nq = model.nq // 3
     
     
     with mj_viewer.launch_passive(model , data) as viewer:
         while viewer.is_running():
-            for i in range(ml_qpos_traj.shape[0]):
+            for i in range(KNODE_qpos_traj.shape[0]):
                 
                 # Assign states to the dual model
-                data.qpos[:nq] = ml_qpos_traj[i]
+                data.qpos[:nq] = KNODE_qpos_traj[i]
                 data.qpos[nq:2*nq] = gt_qpos_traj[i]
+                data.qpos[2*nq:3*nq] = nominal_qpos_traj[i]
         
                 mujoco.mj_forward(model, data)
-                time.sleep(.002)
+                time.sleep(.002*10)
                 viewer.sync()
     
     

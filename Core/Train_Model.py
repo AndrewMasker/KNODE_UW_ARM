@@ -96,12 +96,18 @@ def load_Model_From_Options(model_options , training_options):
     mjx_model , mjx_data = mj_utils.init_mjx_model(model_xml)
     
     key = jr.key(int(time.time()))
-    model = KNODE(key , mjx_model , model_options["width"] , model_options["depth"] , qvel_max)
+    
     
     if training_options["should_load"]:
-        load_path = os.getcwd() + "/Models/" + training_options["load_name"] + "/model.eqx"
+        load_path = os.getcwd() + "/Models/" + training_options["load_name"] + "/"
+        model_options = parse_Model_Specs(load_path + "model_options.json")
         
-        model = eqx.tree_deserialise_leaves(load_path , model)
+        model = KNODE(key , mjx_model , model_options["width"] , model_options["depth"] , model_options["fe_std"] , model_options["num_fe_features"] , qvel_max)
+        
+        model = eqx.tree_deserialise_leaves(load_path + "model.eqx" , model)
+        
+    else:
+        model = KNODE(key , mjx_model , model_options["width"] , model_options["depth"] , model_options["fe_std"] , model_options["num_fe_features"] , qvel_max)
         
     
     return model , mjx_data
@@ -128,11 +134,13 @@ def visualize_Trained_Model(model , model_options , training_options , trajector
     init_states = {"qpos": jnp.array(d["qpos"][0 , :]) , "qvel": jnp.array(d["qvel"][0 , :])}
     ctrl = jnp.array(d["ctrl"][0 , :])
     
-    ml_traj = model(ts , mjx_data , init_states , ctrl)
-    ml_qpos_traj = np.array(ml_traj["qpos"])
+    KNODE_traj = model(ts , mjx_data , init_states , ctrl , with_learned = True)
+    KNODE_qpos_traj = np.array(KNODE_traj["qpos"])
     
+    nominal_traj = model(ts , mjx_data , init_states , ctrl , with_learned = False)
+    nominal_qpos_traj = np.array(nominal_traj["qpos"])
     
-    mj_utils.visualize_GT_vs_ML_Trajectory(training_options["model_name"] , gt_qpos_traj , ml_qpos_traj)
+    mj_utils.visualize_GT_vs_Nominal_vs_KNODE_Trajectory(training_options["model_name"] , gt_qpos_traj , nominal_qpos_traj , KNODE_qpos_traj)
     
 def plot_Loss(loss_list ):#, save_path):
 #    save_path = save_path + "/Plots"
@@ -180,10 +188,25 @@ def train_Model(model_options , training_options):
         optim = optax.adam(lr)
         opt_state = optim.init(eqx.filter(model , eqx.is_inexact_array))
         
+        l0 = training_options["l0"]
+        l1 = training_options["l1"]
+        l2 = training_options["l2"]
+        
         @eqx.filter_value_and_grad
         def grad_loss(model , ts , gt_trajs , ctrls , mjx_data , init_states):
             pred_trajs = jax.vmap(model , (None , None , 0 , 0))(ts , mjx_data , init_states , ctrls)
-            return jnp.mean((gt_trajs["qpos"] - pred_trajs["qpos"])**2) #+ jnp.mean((gt_trajs["qvel"] - pred_trajs["qvel"])**2)
+            get_data = lambda given_qpos : mjx.kinematics(model.knode_dynamics.mjx_model , mjx_data.replace(qpos=given_qpos))
+            get_data_traj = jax.vmap(jax.vmap(get_data , in_axes = 0 , out_axes = 0) , in_axes = 0 , out_axes = 0)
+#            print(pred_trajs["qpos"].shape)
+            pred_data_trajs = get_data_traj(pred_trajs["qpos"])
+            gt_data_trajs = get_data_traj(gt_trajs["qpos"])
+            pred_xpos_trajs = pred_data_trajs.xpos
+            gt_xpos_trajs = gt_data_trajs.xpos
+            pred_xquat_trajs = pred_data_trajs.xquat
+            gt_xquat_trajs = gt_data_trajs.xquat
+            pred_qpos_trajs = pred_trajs["qpos"]
+            gt_qpos_trajs = gt_trajs["qpos"]
+            return l0*jnp.mean((pred_xpos_trajs - gt_xpos_trajs)**2) + l1*jnp.mean((pred_xquat_trajs - gt_xquat_trajs)**2) + l2*jnp.mean((pred_qpos_trajs - gt_qpos_trajs)**2)#jnp.mean((gt_trajs["qpos"] - pred_trajs["qpos"])**2) #+ jnp.mean((gt_trajs["qvel"] - pred_trajs["qvel"])**2)
         
         @eqx.filter_jit
         def make_step(model , ts , gt_trajs , ctrls , mjx_data):
@@ -222,7 +245,7 @@ if __name__ == "__main__":
     model , loss_list = train_Model(model_options , training_options)
     save_path = save_Model(model , loss_list , model_options , training_options)
     plot_Loss(loss_list)
-    visualize_Trained_Model(model , model_options , training_options , 4)
+    visualize_Trained_Model(model , model_options , training_options , 2)
     plt.show()
     
     
