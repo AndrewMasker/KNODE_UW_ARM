@@ -49,15 +49,15 @@ class zarr_Trajectory_Dataset(grain.MapDataset):
 
     def __getitem__(self , idx):
         grp = self.root[self.keys[idx%self.len_keys]]
-        traj = {"qpos": jnp.array(grp['qpos']) , "qvel": jnp.array(grp['qvel'])}
-        ctrl = jnp.array(grp['ctrl'])[0 , :]
+        traj = {"qpos": grp['qpos'] , "qvel": grp['qvel']}
+        ctrl = grp['ctrl'][0 , :]
 
         return traj , ctrl
 
 def collate_fn(batch):
 
-    batched_data = jnp.stack([sample[0] for sample in batch])
-    batched_label = jnp.stack([sample[1] for sample in batch])
+    batched_data = np.stack([sample[0] for sample in batch])
+    batched_label = np.stack([sample[1] for sample in batch])
 
     return (batched_data , batched_label)
     

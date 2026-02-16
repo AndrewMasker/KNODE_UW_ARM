@@ -20,3 +20,12 @@ that map to the linear region to be adjusted, this also made the model better by
 next order of business is to fix how I am using the eqx.field(static=True). I think this is a very large reason 
 why the models take forver to compile and trace, as this apparantly takes all of the fields marked static and bakes 
 them into the xla code. So I will have to use the partition method to make fields non trainable.
+
+16 Feb 2026:
+Fixed thing I mentioned above. Came to conclusion that FE is not good. Figured out that the lower the batch size the
+better the training, likely due to the stochasticisty. Figured out that the model trains faster, better, and is less 
+likely to freak out and die if I stick to a single layer. Very nice. At this point everything is like 90% there,
+it just won't go that last 10%. I think that the main issue is that the network gets saturated figuring out all of the
+large features and getting the trajectories to match most of the way, but then gets stuck in a local minimum or it
+legit doesn't have the expressivity (which I doubt somewhat). I think that the best way to fix this is to train a 
+network then introduce another network to fix the errors in that, ad infinitum.

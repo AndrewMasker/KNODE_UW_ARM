@@ -9,20 +9,20 @@ from mujoco import mjx
 class Residual_Network(eqx.Module):
     out_scale: jax.Array
     mlp: eqx.nn.MLP
-    fe_sin_matrix: jax.Array = eqx.field(static = True)
-    fe_cos_matrix: jax.Array = eqx.field(static = True)
-    input_norm_add:     jax.Array = eqx.field(static = True)
-    input_norm_mult:    jax.Array = eqx.field(static = True)
-    output_denorm_add:  jax.Array = eqx.field(static = True)
-    output_denorm_mult: jax.Array = eqx.field(static = True)
+#    fe_sin_matrix: jax.Array# = eqx.field(static = True)
+#    fe_cos_matrix: jax.Array# = eqx.field(static = True)
+    input_norm_add:     jax.Array# = eqx.field(static = True)
+    input_norm_mult:    jax.Array# = eqx.field(static = True)
+    output_denorm_add:  jax.Array# = eqx.field(static = True)
+    output_denorm_mult: jax.Array# = eqx.field(static = True)
 
     
     def __init__(self , input_num , output_num , width , depth , fe_std , num_fe_features , qpos_ranges , qvel_max , ctrl_ranges , key):
         key1 , key2 , key3 = jr.split(key , 3)
         self.out_scale = jnp.array(1)
         self.mlp = eqx.nn.MLP(
-            in_size = input_num , #num_fe_features*2 , 
-            out_size = output_num , 
+            in_size = input_num, 
+            out_size = output_num, 
             width_size = width , 
             depth = depth , 
             activation = jax.nn.relu ,
@@ -39,8 +39,8 @@ class Residual_Network(eqx.Module):
         self.output_denorm_add = -jnp.concatenate((qpos_add , qvel_add) , axis=0)
         self.output_denorm_mult = 1/jnp.concatenate((qpos_mult , qvel_mult) , axis=0)
         
-        self.fe_sin_matrix = jr.uniform(key2 , shape = (input_num , num_fe_features))*fe_std
-        self.fe_cos_matrix = jr.uniform(key3 , shape = (input_num , num_fe_features))*fe_std
+#        self.fe_sin_matrix = jr.uniform(key2 , shape = (input_num , num_fe_features))*fe_std
+#        self.fe_cos_matrix = jr.uniform(key3 , shape = (input_num , num_fe_features))*fe_std
         
     def __call__(self , y):
         normalized_input = self.input_norm_mult*(y + self.input_norm_add) - 1
@@ -58,7 +58,7 @@ class KNODE_Dynamics(eqx.Module):
     residual_network: Residual_Network
     mjx_mixing_matrix: jax.Array
     res_mixing_matrix: jax.Array
-    mjx_model: mjx.Model = eqx.field(static = True)
+    mjx_model: mjx.Model# = eqx.field(static = True)
     
     def __init__(self , mjx_model , network_args , key):
         self.mjx_model = mjx_model
@@ -116,8 +116,6 @@ class KNODE(eqx.Module):
         
         self.knode_dynamics = KNODE_Dynamics(mjx_model , network_args , key2)
         
-#        print(self.knode_dynamics(0 , {"qpos": jnp.zeros((9,)), "qvel":jnp.zeros((9,))} ,(mjx_data , jnp.zeros((8,)))))
-#        poop()
         
     def __call__(self , ts , mjx_data , init_state , ctrl , with_learned=True):
         mjx_data = mjx_data.replace(qpos = init_state["qpos"] , qvel = init_state["qvel"] , ctrl = ctrl)

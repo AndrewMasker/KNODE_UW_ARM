@@ -3,15 +3,15 @@
     "dataset_name": "dataset_1",
     "model_name": "mjx_panda",
     "should_load": true , 
-    "load_name": "test_3",
+    "load_name": "test_25",
     
     "batch_size": 200 , 
     "lr_strategy": [0.0001 , 0.0001] ,
     "steps_strategy": [0.3 , 0.3] , 
     "num_batches_strategy": [0 , 0] ,
-    "l0": 193 , 
-    "l1": 107 , 
-    "l2": 27 , 
+    "l0": 193 , "_default_l0": "193" ,
+    "l1": 0 , "_default_l1": "107" , 
+    "l2": 27 , "_default_l2": "27" , 
     
     "is_gravity": false , 
     "is_fluid": false , 
@@ -21,5 +21,6 @@
     "viscosity": "0.00002" , 
     "step_size": "0.002" ,
     
-    "print_every": 5
+    "print_every": 5 , 
+    "which_to_show_at_end": 9
 }
