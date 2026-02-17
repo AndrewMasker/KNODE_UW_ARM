@@ -29,3 +29,13 @@ it just won't go that last 10%. I think that the main issue is that the network 
 large features and getting the trajectories to match most of the way, but then gets stuck in a local minimum or it
 legit doesn't have the expressivity (which I doubt somewhat). I think that the best way to fix this is to train a 
 network then introduce another network to fix the errors in that, ad infinitum.
+
+17 Feb 2026:
+Training a network over top of another does not work. I realized that the output scaling factor was set as an int and 
+as such was not training. Fixed that and it messed everything up. I just got rid of it and everything is back to normal.
+Ran a few tests with different configurations of what is considered in the loss term, qpos, xpos, xquat. The general 
+consensus is that it doesn't totally matter but qpos+xpos is the best so far. I believe that many of my issues stem
+from not considering velocity within the loss term. I have come to this conclusion from watchin the learned vs ground
+truth trajectories, where the main differences would very likely be fixed if the velocities were more informed.
+I think that will be my task for tomorrow. I do think as it is we are seeing a considerably better performance than
+the nominal model, which may mean that we are good enough, but I would like to continue to adjust until I feel satisfied.

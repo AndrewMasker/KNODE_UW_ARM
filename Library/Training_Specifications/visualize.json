@@ -3,7 +3,7 @@
     "dataset_name": "dataset_1",
     "model_name": "mjx_panda",
     "should_load": true , 
-    "load_name": "test_25",
+    "load_name": "test_12",
     
     "batch_size": 200 , 
     "lr_strategy": [0.0001 , 0.0001] ,
@@ -22,5 +22,6 @@
     "step_size": "0.002" ,
     
     "print_every": 5 , 
-    "which_to_show_at_end": 9
+    "which_to_show_at_end": 11 ,
+    "should_save": false
 }
