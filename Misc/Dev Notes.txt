@@ -39,3 +39,9 @@ from not considering velocity within the loss term. I have come to this conclusi
 truth trajectories, where the main differences would very likely be fixed if the velocities were more informed.
 I think that will be my task for tomorrow. I do think as it is we are seeing a considerably better performance than
 the nominal model, which may mean that we are good enough, but I would like to continue to adjust until I feel satisfied.
+
+18 Feb 2026:
+I switched such that the model only predicts corrections in acceleration. I found out that the model was previously not
+using the nominal dynamics, as I was taking qacc rather than qacc_smooth. I think next steps are to recalibrate default
+loss weightings with the current setup along with adjusting the default mixing matrices and scaling factor. The use of
+the diagonal scaling should be inspected against vertical scaling. 

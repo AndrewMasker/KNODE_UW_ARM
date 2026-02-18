@@ -10,8 +10,10 @@
     "steps_strategy": [1 , 1] , 
     "num_batches_strategy": [1000 , 0] ,
     "l0": 193 , "_default_l0": "193" ,
-    "l1": 107 , "_default_l1": "107" , 
-    "l2": 0 , "_default_l2": "27" , 
+    "l1": 0 , "_default_l1": "107" , 
+    "l2": 27 , "_default_l2": "27" , 
+    "l3": 0.3398 , "_default_l3": "0.3398" , 
+    "l4": 0.268153 , "_default_l4": "0.268153" ,
     
     "is_gravity": false , 
     "is_fluid": false , 
