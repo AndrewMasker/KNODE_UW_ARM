@@ -38,17 +38,24 @@ def convert_Zarr_Saveable_to_Dict(dicty):
     return new_dicty
 
 class zarr_Trajectory_Dataset(grain.MapDataset):
-    def __init__(self , root_path):
+    def __init__(self , root_path , subset_size):
         super().__init__()
         self.root = zarr.open(root_path , mode = 'r')
         self.keys = list(self.root.keys())
         self.len_keys = len(self.keys)
+        if subset_size == "None":
+            self.length = self.len_keys
+        else:
+            if subset_size > self.len_keys:
+                raise ValueError("Subset Size Cannot Be Greater Than Dataset Size")
+            else:
+                self.length = subset_size
 
     def __len__(self):
-        return len(self.keys)
+        return self.length
 
     def __getitem__(self , idx):
-        grp = self.root[self.keys[idx%self.len_keys]]
+        grp = self.root[self.keys[idx%self.length]]
         traj = {"qpos": grp['qpos'] , "qvel": grp['qvel']}
         ctrl = grp['ctrl'][0 , :]
 

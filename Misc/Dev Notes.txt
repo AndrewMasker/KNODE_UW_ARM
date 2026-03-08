@@ -45,3 +45,28 @@ I switched such that the model only predicts corrections in acceleration. I foun
 using the nominal dynamics, as I was taking qacc rather than qacc_smooth. I think next steps are to recalibrate default
 loss weightings with the current setup along with adjusting the default mixing matrices and scaling factor. The use of
 the diagonal scaling should be inspected against vertical scaling. 
+
+8 Mar 2026:
+I have been working over the past weeks minimally as I have been swamped with exams. I fixed the nominal model as it
+was woefully broken. I adjusted the default loss weightings. After this it became apparant that something very odd is
+going on with training. I adjusted the dataset code such that it allowed for a subset of the dataset to be trained on.
+Training on just one or two samples reveals loss decreasing then increasing again. All of it is very smooth given the 
+lack of batched training. I think that is a result of momentum. I swithced to sgd and that issue went away and the loss
+could actually be brought to reasonably low levels, but for whatever reason the actual arm does not look super close or
+it even looks worse than the nominal (this is killing me). I actually do not know whether it is important to use one 
+of the more advanced optimizers for the whole dataset as I am quite convinced that the problem is quite convex, though
+some behavior seems to suggest that the convexity may be counterposed by very sharp minima, causing training issues. 
+I do think that the samples in the dataset are not very smililar to each other in the sense of being able to be
+represented by a small number of overlapping parameters. I think this will require large batch sizes so that each batch
+actually makes up a representative sample of the dataset, but at the same time stochasticity is not always a bad thing.
+In most of my training runs on small 1 or 2 sample sets, I have not let loss technially bottom out, given that the 
+loglog plot of loss still appears linear by the end of training. On some I have allowed it to bottom out, and in those
+runs it does not seem to be much better than the other runs. This leads me to believe that I may also have an issue with
+representational capacity. I may need to increase network depth (currently 1 layer), or reintroduce FE. I am somewhat
+unconvinced of the need for FE given that the velocity field (of velocity) should be relatively smooth and low frequency,
+which is just the thing that vanilla NN are great at. One other thing I have noticed is that the accelerations have lots
+of "wiggles" or oscillations around the ground truth acceleration. This leads me to believe that, at least on the low
+sample number networks we are seeing odd behavior which I have many competing explanations for, none of which I like too
+much. I think my next steps will include a lot of trial and error to see which of the globs of word vomit above are
+actually important. Maybe it will just randomly resolve itself after a lot of work, none of which seems to have changed 
+anything at all. Who knows.

@@ -159,8 +159,8 @@ def visualize_Trained_Model(model , model_options , training_options , loss_list
     ax4.plot(nominal_traj["qvel"] , color = 'red')
     ax4.plot(d["qvel"] , color = 'black')
     
-    ax5.plot((nominal_traj["qvel"][1:] - nominal_traj["qvel"][:-1])/dt , color = 'green')
-    ax5.plot((KNODE_traj["qvel"][1:] - KNODE_traj["qvel"][:-1])/dt  , color = 'red')
+    ax5.plot((KNODE_traj["qvel"][1:] - KNODE_traj["qvel"][:-1])/dt , color = 'green')
+    ax5.plot((nominal_traj["qvel"][1:] - nominal_traj["qvel"][:-1])/dt  , color = 'red')
     ax5.plot((d["qvel"][1:] - d["qvel"][:-1])/dt  , color = 'black')
     
    
@@ -219,7 +219,7 @@ def train_Model(model_options , training_options):
     
     for num_batches , steps_strategy , lr in zip(training_options["num_batches_strategy"] , training_options["steps_strategy"] , training_options["lr_strategy"]):
         
-        dataset = data_utils.zarr_Trajectory_Dataset(dataset_path)
+        dataset = data_utils.zarr_Trajectory_Dataset(dataset_path , training_options["subset_size"])
         dataset = (dataset
                    .shuffle(seed = int(time.time()))
                    .batch(batch_size = training_options["batch_size"] , drop_remainder = True)
@@ -240,8 +240,9 @@ def train_Model(model_options , training_options):
                 enqueue(1)
         iter_loader =  prefetch(iter_loader , size=5)
         
-        optim = optax.adam(lr)
-        opt_state = optim.init(eqx.filter(model , eqx.is_inexact_array))
+        optim = optax.sgd(lr)
+        diff_model , static_model = eqx.partition(model , filter_spec)
+        opt_state = optim.init(eqx.filter(diff_model , eqx.is_inexact_array))
         
         l0 = training_options["l0"]
         l1 = training_options["l1"]
@@ -287,8 +288,14 @@ def train_Model(model_options , training_options):
             diff_model , static_model = eqx.partition(model , filter_spec)
             init_states = {"qpos": gt_trajs["qpos"][: , 0 , :] , "qvel": gt_trajs["qvel"][: , 0 , :]}
             loss , grads = grad_loss(diff_model , static_model , ts , gt_trajs , ctrls , mjx_data , init_states)
+#            print(grads.knode_dynamics.residual_network.out_scale)
+#            print(grads.knode_dynamics.residual_network.mlp.layers[0].weight)
+#            print(grads.knode_dynamics.mjx_mixing_matrix)
+#            print(grads.knode_dynamics.res_mixing_matrix)
+#            poop()
             updates , opt_states = optim.update(grads , opt_state)
-            model = eqx.apply_updates(model , updates)
+            diff_model = eqx.apply_updates(diff_model , updates)
+            model = eqx.combine(diff_model , static_model)
             return loss , model , opt_states
     
         _num_steps = int(num_steps*steps_strategy)

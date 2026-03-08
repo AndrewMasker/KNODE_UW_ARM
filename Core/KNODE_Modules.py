@@ -4,6 +4,7 @@ import jax
 import jax.numpy as jnp
 import jax.random as jr
 from mujoco import mjx
+import Utils.MJX_Diff as mjx_diff
 
 # This class holds the neural network velocity field residuals of KNODE
 class Residual_Network(eqx.Module):
@@ -19,7 +20,7 @@ class Residual_Network(eqx.Module):
     
     def __init__(self , input_num , output_num , width , depth , qpos_ranges , qvel_max , ctrl_ranges , * ,  key):
         key1 , key2 , key3 = jr.split(key , 3)
-        self.out_scale = jnp.array(100.0)
+        self.out_scale = jnp.array(1.0)
         self.mlp = eqx.nn.MLP(
             in_size = input_num, 
             out_size = output_num, 
@@ -75,21 +76,23 @@ class KNODE_Dynamics(eqx.Module):
         mjx_data , ctrl , with_learned = args
         mjx_data = mjx_data.replace(qpos = qpos , qvel = qvel , ctrl = ctrl)
 #        mjx_data = mjx.forward(self.mjx_model , mjx_data)
-#        qacc = mjx_data.qacc
+#        mjx_qacc = mjx_data.qacc
 
-        mjx_data = mjx.kinematics(self.mjx_model , mjx_data)
-        mjx_data = mjx.com_pos(self.mjx_model , mjx_data)
-        mjx_data = mjx.com_vel(self.mjx_model, mjx_data)
-        mjx_data = mjx.crb(self.mjx_model , mjx_data)
-        mjx_data = mjx.factor_m(self.mjx_model , mjx_data)
-        mjx_data = mjx.rne(self.mjx_model , mjx_data)
-        mjx_data = mjx.passive(self.mjx_model , mjx_data)
-        mjx_data = mjx.fwd_actuation(self.mjx_model , mjx_data)
-        #mjx_data = mjx.collision(self.mjx_model , mjx_data)
-        #mjx_data = mjx.make_constraint(self.mjx_model , mjx_data)
-        mjx_data = mjx.fwd_acceleration(self.mjx_model , mjx_data)
-        mjx_qacc = mjx_data.qacc_smooth
+#        mjx_data = mjx.kinematics(self.mjx_model , mjx_data)
+#        mjx_data = mjx.com_pos(self.mjx_model , mjx_data)
+#        mjx_data = mjx.com_vel(self.mjx_model, mjx_data)
+#        mjx_data = mjx.crb(self.mjx_model , mjx_data)
+#        mjx_data = mjx.factor_m(self.mjx_model , mjx_data)
+#        mjx_data = mjx.rne(self.mjx_model , mjx_data)
+#        mjx_data = mjx.passive(self.mjx_model , mjx_data)
+#        mjx_data = mjx.fwd_actuation(self.mjx_model , mjx_data)
+#        #mjx_data = mjx.collision(self.mjx_model , mjx_data)
+#        #mjx_data = mjx.make_constraint(self.mjx_model , mjx_data)
+#        mjx_data = mjx.fwd_acceleration(self.mjx_model , mjx_data)
+#        mjx_qacc = mjx_data.qacc_smooth
         
+        mjx_data = mjx_diff.forward(self.mjx_model , mjx_data)
+        mjx_qacc = mjx_data.qacc
       
         if with_learned:
             res_state_vel = self.residual_network(jnp.concatenate((qpos , qvel , ctrl)))
