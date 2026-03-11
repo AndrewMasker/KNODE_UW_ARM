@@ -85,7 +85,7 @@ def get_New_Name(name , *args):
 
 def main(dataset_options):
     
-    model_xml = mj_utils.create_XML_From_Dataset_Options(dataset_options)
+    model_xml = mj_utils.create_XML_From_Options(dataset_options)
     mjx_model , mjx_data = mj_utils.init_mjx_model(model_xml)
     
     qpos_ranges = mjx_model.jnt_range

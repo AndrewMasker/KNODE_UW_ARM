@@ -70,3 +70,26 @@ sample number networks we are seeing odd behavior which I have many competing ex
 much. I think my next steps will include a lot of trial and error to see which of the globs of word vomit above are
 actually important. Maybe it will just randomly resolve itself after a lot of work, none of which seems to have changed 
 anything at all. Who knows.
+
+11 Marc 2026:
+This is my note for the past 3ish days. I adjusted the code such that we o not directly add to the qacc but rather add
+a residual to the torque before they are multiplied by the inverse of the mass matrix. I don't know if this has helped
+or not but it seems like a good idea. I have added the ability to train with just accelerations rather than on whole
+trajectories. Didn't seem to do much. I am actually quite worried/confused about the plots of joint accelerations 
+of each trajectory. For whatever reason they start with very high accelerations then decay almost to zero. I think
+this may be due to damping. I think each joint is essentially reaching a terminal velocity given its inputs. I was
+also worried somewhat that the actuators were stateful in the actual model which would really mess things up, but I don't
+think it is the case. I was worried that I was starting with too high of velocites in my dataset, causing the damping to 
+be severe and affect stuff. I trained without the nominal dynamics on just 2 samples and the loss is about the same but
+it sucks tbh. I am being killed slowly. why does this shit not just work. Even training on raw accelerations doesn't
+seem to be working for large numbers of data. I don't know why the training doesn't work with many samples. I do think
+it is a good idea to train on acceleration first then use the trajectories as fine tuning, but that only works if the 
+space is densly sampled. At this point it must be soem sort of representational issue. I dont understand. It legit cant
+match acceleration for 100 samples. Makes no sense.
+
+
+
+
+
+
+

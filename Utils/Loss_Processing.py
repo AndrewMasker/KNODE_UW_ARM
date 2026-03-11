@@ -1,10 +1,12 @@
 import argparse
 import json
+import matplotlib.pyplot as plt
+import numpy as np
 
 def return_Arguments():
     parser = argparse.ArgumentParser()
-    parser.add_argument("-n" , "--name" , type = str , default = "l4_test_03052026")
-    parser.add_argument("-t" , "--tasks" , nargs = "+" , type = str , default = ["mean" , "inverse_mean" , "std"])
+    parser.add_argument("-n" , "--name" , type = str , default = "test_just_2_7")
+    parser.add_argument("-t" , "--tasks" , nargs = "+" , type = str , default = ["mean" , "inverse_mean" , "std" , "vis"])
     
     args = parser.parse_args()
     
@@ -34,11 +36,22 @@ def get_Std(save_path):
     std = sum(diff_square) / (len(diff_square)-1)
     
     print(f"Standard Deviation: {std}")
+    
+
+def vis_Loss(save_path):
+    loss_list = get_LL_from_SP(save_path)
+    fig , (ax1 , ax2) = plt.subplots(1 , 2)
+    loss_inds = np.arange(1 , len(loss_list) + 1)
+    ax1.plot(loss_inds , loss_list)
+    ax2.loglog(loss_inds , loss_list)
+    plt.show()
+    
 
 task_to_function_mapping = {
     'mean': get_Mean,
     'std': get_Std , 
-    'inverse_mean': get_Inverse_Mean
+    'inverse_mean': get_Inverse_Mean , 
+    'vis': vis_Loss
 }
         
 def main():

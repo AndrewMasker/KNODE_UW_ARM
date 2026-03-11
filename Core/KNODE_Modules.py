@@ -20,13 +20,13 @@ class Residual_Network(eqx.Module):
     
     def __init__(self , input_num , output_num , width , depth , qpos_ranges , qvel_max , ctrl_ranges , * ,  key):
         key1 , key2 , key3 = jr.split(key , 3)
-        self.out_scale = jnp.array(1.0)
+        self.out_scale = jnp.array(100.0) #500
         self.mlp = eqx.nn.MLP(
             in_size = input_num, 
             out_size = output_num, 
             width_size = width , 
             depth = depth , 
-            activation = jax.nn.relu ,
+            activation = jax.nn.gelu ,
             key = key1)
         qpos_add = -qpos_ranges[: , 0]
         qvel_add =  qvel_max
@@ -49,8 +49,8 @@ class Residual_Network(eqx.Module):
 #        fe_cos_input = jnp.cos(normalized_input @ self.fe_cos_matrix)
 #        fe_input = jnp.concatenate((fe_sin_input , fe_cos_input) , 0)
         mlp_output = self.mlp(normalized_input)
-        limited_mlp_output = jax.nn.tanh(mlp_output/self.out_scale)*self.out_scale
-        denormalized_output = (limited_mlp_output + 1)*self.output_denorm_mult + self.output_denorm_add
+        limited_mlp_output = mlp_output#jax.nn.tanh(mlp_output)*self.out_scale#/self.out_scale)*self.out_scale
+        denormalized_output = self.out_scale*limited_mlp_output#(limited_mlp_output + 1)*self.output_denorm_mult + self.output_denorm_add
         return denormalized_output
     
 
@@ -65,7 +65,7 @@ class KNODE_Dynamics(eqx.Module):
         keys = jr.split(key , 3)
         self.mjx_model = mjx_model
         self.residual_network = Residual_Network(*network_args , key=keys[0])
-        self.res_mixing_matrix = jr.uniform(keys[1] , (network_args[1] , network_args[1]) , minval=-.1 , maxval=.1)
+        self.res_mixing_matrix = jr.uniform(keys[1] , (network_args[1] , network_args[1]) , minval=-1.0 , maxval=1.0)
         self.mjx_mixing_matrix = jnp.eye(network_args[1]) + jr.uniform(keys[2] , (network_args[1] , network_args[1]) , minval=-.1 , maxval=.1)
         
         
@@ -91,15 +91,24 @@ class KNODE_Dynamics(eqx.Module):
 #        mjx_data = mjx.fwd_acceleration(self.mjx_model , mjx_data)
 #        mjx_qacc = mjx_data.qacc_smooth
         
-        mjx_data = mjx_diff.forward(self.mjx_model , mjx_data)
-        mjx_qacc = mjx_data.qacc
+
       
-        if with_learned:
-            res_state_vel = self.residual_network(jnp.concatenate((qpos , qvel , ctrl)))
-            final_qacc = mjx_qacc @ self.mjx_mixing_matrix + res_state_vel @ self.res_mixing_matrix
-        else:
-            final_qacc = mjx_qacc
-        
+#        if with_learned:
+#            mjx_data = mjx_diff.forward(self.mjx_model , mjx_data , self.residual_network(jnp.concatenate((qpos , qvel , ctrl))))
+#            mjx_qacc = mjx_data.qacc
+#            
+#            final_qacc = mjx_qacc# + res_state_vel @ self.res_mixing_matrix
+#        else:
+#            mjx_data = mjx_diff.forward(self.mjx_model , mjx_data , 0)
+#            mjx_qacc = mjx_data.qacc
+#            final_qacc = mjx_qacc
+            
+        mjx_data = mjx_diff.forward(self.mjx_model , mjx_data , with_learned*self.residual_network(jnp.concatenate((qpos , qvel , ctrl))))
+        mjx_qacc = mjx_data.qacc
+
+        final_qacc = mjx_qacc# + res_state_vel @ self.res_mixing_matrix
+    
+    
         return {"qpos": qvel , "qvel": final_qacc}
         
         
@@ -150,13 +159,13 @@ class KNODE(eqx.Module):
         
         solution = diffrax.diffeqsolve(
             diffrax.ODETerm(self.knode_dynamics) ,
-            diffrax.Tsit5() ,
+            diffrax.Euler() ,
             t0 = ts[0] ,
             t1 = ts[-1] ,
             dt0 = ts[1] - ts[0] , 
             y0 = init_state ,
             args = (mjx_data , ctrl , with_learned) ,
-            stepsize_controller = diffrax.PIDController(rtol=1e-3, atol=1e-3) ,
+#            stepsize_controller = diffrax.PIDController(rtol=1e-3, atol=1e-3) ,
             saveat = diffrax.SaveAt(ts=ts)
             )
         return solution.ys

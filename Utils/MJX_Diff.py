@@ -169,33 +169,33 @@ def fwd_actuation(m: Model, d: Data) -> Data:
       group_by='u',
   )
 
-  # tendon total force clamping
-  if np.any(m.tendon_actfrclimited):
-    (tendon_actfrclimited_id,) = np.nonzero(m.tendon_actfrclimited)
-    actuator_tendon = m.actuator_trntype == TrnType.TENDON
-
-    force_mask = [
-        actuator_tendon & (m.actuator_trnid[:, 0] == tendon_id)
-        for tendon_id in tendon_actfrclimited_id
-    ]
-    force_ids = np.concatenate([np.nonzero(mask)[0] for mask in force_mask])
-    force_mat = np.array(force_mask)[:, force_ids]
-    tendon_total_force = force_mat @ force[force_ids]
-
-    force_scaling = jp.where(
-        tendon_total_force < m.tendon_actfrcrange[tendon_actfrclimited_id, 0],
-        m.tendon_actfrcrange[tendon_actfrclimited_id, 0] / tendon_total_force,
-        1,
-    )
-    force_scaling = jp.where(
-        tendon_total_force > m.tendon_actfrcrange[tendon_actfrclimited_id, 1],
-        m.tendon_actfrcrange[tendon_actfrclimited_id, 1] / tendon_total_force,
-        force_scaling,
-    )
-
-    tendon_forces = force[force_ids] * (force_mat.T @ force_scaling)
-    force = force.at[force_ids].set(tendon_forces)
-
+#  # tendon total force clamping
+#  if np.any(m.tendon_actfrclimited):
+#    (tendon_actfrclimited_id,) = np.nonzero(m.tendon_actfrclimited)
+#    actuator_tendon = m.actuator_trntype == TrnType.TENDON
+#
+#    force_mask = [
+#        actuator_tendon & (m.actuator_trnid[:, 0] == tendon_id)
+#        for tendon_id in tendon_actfrclimited_id
+#    ]
+#    force_ids = np.concatenate([np.nonzero(mask)[0] for mask in force_mask])
+#    force_mat = np.array(force_mask)[:, force_ids]
+#    tendon_total_force = force_mat @ force[force_ids]
+#
+#    force_scaling = jp.where(
+#        tendon_total_force < m.tendon_actfrcrange[tendon_actfrclimited_id, 0],
+#        m.tendon_actfrcrange[tendon_actfrclimited_id, 0] / tendon_total_force,
+#        1,
+#    )
+#    force_scaling = jp.where(
+#        tendon_total_force > m.tendon_actfrcrange[tendon_actfrclimited_id, 1],
+#        m.tendon_actfrcrange[tendon_actfrclimited_id, 1] / tendon_total_force,
+#        force_scaling,
+#    )
+#
+#    tendon_forces = force[force_ids] * (force_mat.T @ force_scaling)
+#    force = force.at[force_ids].set(tendon_forces)
+#
   forcerange = jp.where(
       m.actuator_forcelimited[:, None],
       m.actuator_forcerange,
@@ -226,10 +226,10 @@ def fwd_actuation(m: Model, d: Data) -> Data:
 
 
 @named_scope
-def fwd_acceleration(m: Model, d: Data) -> Data:
+def fwd_acceleration(m: Model, d: Data , residual) -> Data:
   """Add up all non-constraint forces, compute qacc_smooth."""
   qfrc_applied = d.qfrc_applied + support.xfrc_accumulate(m, d)
-  qfrc_smooth = d.qfrc_passive - d.qfrc_bias + d.qfrc_actuator + qfrc_applied
+  qfrc_smooth = d.qfrc_passive - d.qfrc_bias + d.qfrc_actuator + qfrc_applied + residual
   qacc_smooth = smooth.solve_m(m, d, qfrc_smooth)
   d = d.replace(qfrc_smooth=qfrc_smooth, qacc_smooth=qacc_smooth)
   return d
@@ -238,25 +238,25 @@ def fwd_acceleration(m: Model, d: Data) -> Data:
 
 
 @named_scope
-def forward(m: Model, d: Data) -> Data:
+def forward(m: Model, d: Data , residual) -> Data:
   """Forward dynamics."""
 #  if m.impl == Impl.WARP and d.impl == Impl.WARP and mjxw.WARP_INSTALLED:
 #    from mujoco.mjx.warp import forward as mjxw_forward  # pylint: disable=g-import-not-at-top  # pytype: disable=import-error
 #    return mjxw_forward.forward(m, d)
 
-  if not isinstance(m._impl, ModelJAX) or not isinstance(d._impl, DataJAX):
-    raise ValueError('forward requires JAX backend implementation.')
+#  if not isinstance(m._impl, ModelJAX) or not isinstance(d._impl, DataJAX):
+#    raise ValueError('forward requires JAX backend implementation.')
 
   d = fwd_position(m, d)
 #  d = sensor.sensor_pos(m, d)
   d = fwd_velocity(m, d)
 #  d = sensor.sensor_vel(m, d)
   d = fwd_actuation(m, d)
-  d = fwd_acceleration(m, d)
+  d = fwd_acceleration(m, d , residual)
 
-  if d._impl.efc_J.size == 0:
-    d = d.replace(qacc=d.qacc_smooth)
-    return d
+#  if d._impl.efc_J.size == 0:
+#    d = d.replace(qacc=d.qacc_smooth)
+#    return d
 
 #  d = named_scope(solver.solve)(m, d)
   d = d.replace(qacc=d.qacc_smooth)
