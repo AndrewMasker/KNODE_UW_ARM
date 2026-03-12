@@ -1,9 +1,9 @@
 {
     "name": "test", 
-    "dataset_name": "dataset_1",
-    "model_name": "mjx_panda",
+    "dataset_name": "dataset_2",
+    "model_name": "mjx_panda_orig",
     "should_load": true , 
-    "load_name": "test_just_10",
+    "load_name": "test_dataset_2_8",
     
     "batch_size": 200 , 
     "subset_size": "None" ,
@@ -25,6 +25,6 @@
     "step_size": "0.002" ,
     
     "print_every": 5 , 
-    "which_to_show_at_end": 5 ,
+    "which_to_show_at_end": 7 ,
     "should_save": false
 }

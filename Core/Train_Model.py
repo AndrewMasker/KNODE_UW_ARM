@@ -145,7 +145,7 @@ def visualize_Trained_Model(model , model_options , training_options , loss_list
     nominal_qpos_traj = np.array(nominal_traj["qpos"])
 
     
-    fig , (ax1 , ax2 , ax3 , ax4 , ax5) = plt.subplots(1 , 5)
+    fig , (ax1 , ax2 , ax3 , ax4 , ax5 , ax6) = plt.subplots(1 , 6)
     
     loss_inds = np.arange(1 , len(loss_list) + 1)
     ax1.plot(loss_inds , loss_list)
@@ -160,9 +160,17 @@ def visualize_Trained_Model(model , model_options , training_options , loss_list
     ax4.plot(nominal_traj["qvel"] , color = 'red')
     ax4.plot(d["qvel"] , color = 'black')
     
-    ax5.plot((KNODE_traj["qvel"][1:] - KNODE_traj["qvel"][:-1])/dt , color = 'green')
-    ax5.plot((nominal_traj["qvel"][1:] - nominal_traj["qvel"][:-1])/dt  , color = 'red')
-    ax5.plot((d["qvel"][1:] - d["qvel"][:-1])/dt  , color = 'black')
+    KNODE_acc = (KNODE_traj["qvel"][1:] - KNODE_traj["qvel"][:-1])/dt
+    nominal_acc = (nominal_traj["qvel"][1:] - nominal_traj["qvel"][:-1])/dt
+    gt_acc = (d["qvel"][1:] - d["qvel"][:-1])/dt
+    
+    ax5.plot(KNODE_acc , color = 'green')
+    ax5.plot(nominal_acc , color = 'red')
+    ax5.plot(gt_acc , color = 'black')
+    
+    ax6.plot(KNODE_acc - nominal_acc , color = 'green')
+#    ax5.plot(nominal_acc , color = 'red')
+    ax6.plot((gt_acc - nominal_acc) , color = 'black')
     
    
     plt.show(block = False)
@@ -430,9 +438,9 @@ def train_Model(model_options , training_options):
     
     
     for num_batches , steps_strategy , lr in zip(training_options["num_batches_strategy"] , training_options["steps_strategy"] , training_options["lr_strategy"]):
-#        model , loss_list = trajectory_Train(model , mjx_data , num_batches , steps_strategy , lr , training_options , filter_spec , loss_list)
+        model , loss_list = trajectory_Train(model , mjx_data , num_batches , steps_strategy , lr , training_options , filter_spec , loss_list)
         
-        model , loss_list = accel_Train_From_Trajectory(model , mjx_data , num_batches , steps_strategy , lr , training_options , filter_spec , loss_list)
+#        model , loss_list = accel_Train_From_Trajectory(model , mjx_data , num_batches , steps_strategy , lr , training_options , filter_spec , loss_list)
         
                 
     return model , loss_list

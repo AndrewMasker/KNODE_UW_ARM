@@ -1,3 +1,4 @@
+import argparse
 import mujoco
 import mujoco.viewer as mj_viewer
 import numpy as np
@@ -58,14 +59,28 @@ def visualize_Saved_Trajectory(dataset_name , trajectory_number):
     
     d = root["trajectory_" + str(trajectory_number)]
     qpos_traj = d["qpos"][:]
+    ctrl_traj = d["ctrl"][:]
     
     with mj_viewer.launch_passive(model , data) as viewer:
         while viewer.is_running():
             for i in range(qpos_traj.shape[0]):
                 data.qpos = qpos_traj[i , :]
+                data.ctrl = ctrl_traj[i , :]
                 mujoco.mj_forward(model, data)
-                time.sleep(.002)
+                time.sleep(.002*10)
                 viewer.sync()
+                
+                
+def visualize_Mujoco_XML(name):
+    xml = get_XML_From_Name(name)
+    
+    model , data = init_mujoco_model(xml)
+    
+    with mj_viewer.launch(model , data) as viewer:
+        while viewer.is_running():            
+            mujoco.mj_forward(model, data)
+            time.sleep(.002)
+            viewer.sync()
                 
 
 def visualize_GT_vs_Nominal_vs_KNODE_Trajectory(model_name , gt_qpos_traj , nominal_qpos_traj , KNODE_qpos_traj):
@@ -75,18 +90,7 @@ def visualize_GT_vs_Nominal_vs_KNODE_Trajectory(model_name , gt_qpos_traj , nomi
     spec1 = mujoco.MjSpec.from_string(xml)
     spec2 = mujoco.MjSpec.from_string(xml)
     
-#    # Prefix everything in the second model to avoid collisions
-#    prefix = "gt_"
-#    for obj_list in [spec2.bodies, spec2.joints, spec2.geoms, spec2.meshes, spec2.materials]:
-#        for item in obj_list:
-#            if item.name:
-#                item.name = prefix + item.name
-#    print(dir(spec2))
-#    spec2_root = spec2.worldbody.first_body()
-#    attachment_body = spec1.worldbody
-#    
-#    spec2_root.attach(attachment_body)
-#    spec1.attach(spec2 , frame = spec1.worldbody)
+
 #    
     model = spec1.compile()
     data = mujoco.MjData(model)
@@ -103,12 +107,35 @@ def visualize_GT_vs_Nominal_vs_KNODE_Trajectory(model_name , gt_qpos_traj , nomi
                 data.qpos[2*nq:3*nq] = nominal_qpos_traj[i]
         
                 mujoco.mj_forward(model, data)
-                time.sleep(.002*100)
+                time.sleep(.002*10)
                 viewer.sync()
     
     
+def return_Arguments():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-t" , "--type" , type = str , default = "traj_vis")
+    parser.add_argument("-n" , "--name" , type = str , default = "mjx_panda_orig")
+    parser.add_argument("-j" , "--traj" , type = int , default = 0)
     
     
+    args = parser.parse_args()
+    
+    type_ = args.type
+    name = args.name
+    traj = args.traj
+        
+    return type_ , name , traj
+    
+def main():
+    type_ , name , traj = return_Arguments()
+    
+    if type_ == "xml_vis":
+        visualize_Mujoco_XML(name)
+    elif type_ == "traj_vis":
+        visualize_Saved_Trajectory(name , traj)
+    
+if __name__ == "__main__":
+    main()
     
     
     

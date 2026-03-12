@@ -71,7 +71,7 @@ much. I think my next steps will include a lot of trial and error to see which o
 actually important. Maybe it will just randomly resolve itself after a lot of work, none of which seems to have changed 
 anything at all. Who knows.
 
-11 Marc 2026:
+11 Mar 2026:
 This is my note for the past 3ish days. I adjusted the code such that we o not directly add to the qacc but rather add
 a residual to the torque before they are multiplied by the inverse of the mass matrix. I don't know if this has helped
 or not but it seems like a good idea. I have added the ability to train with just accelerations rather than on whole
@@ -87,7 +87,38 @@ it is a good idea to train on acceleration first then use the trajectories as fi
 space is densly sampled. At this point it must be soem sort of representational issue. I dont understand. It legit cant
 match acceleration for 100 samples. Makes no sense.
 
+12 Mar 2026 Start of Day:
+Okay, I generated a dataset using the native actuator methods of the panda xml. I think this makes more sense and it 
+yields better behavior. I am excited to see that there is some convergence without limiting to just small subsets of 
+the dataset. I set the nominal so it was equal to the ground truth, which is to say I turned on gravity (technically
+it isn't quite the same aas the ground truth as there are no joint limits) and the model was very astutely able to 
+learn nothing, as it should. This gives me hope, as it was really not something the network was previously capable
+of. Seems as if though for these trajectories it is not important to train on a short part of the trajectory to start.
 
+12 Mar 2026 End of Day:
+At this point I am convinced that learning even just the G term in the robot manipulator formula is too difficult
+for a neural network to achieve with such a high dof system. This actually makes a lot of sense to me in the context
+of our current approach to simulating robots. We don't use the lagrangian approach which spits out very nice analytical
+solutions to these systems because they are very very complicated and slow to compute. Instead we use RNEA to compute
+the bias terms very quickly each timestep. I think that asking the neural network to represent the extermely 
+complicated bias term is too much. Instead, I think a good approach is to append a force (and maybe torque) vector to
+the com of each link based on its world space states, mostly positional and angular velocity and orientation maybe.
+In this way we could use knowledge about the structure of the robot to make the learning much much simpler. I think
+each body should have a neural network that learns to take the local states and compute a force which is then folded
+into the RNEA calculation of generalized coordinate torques. 
+
+12 Mar 2026 Personal Note:
+As a personal note I felt I should write that although this day and the previous days/weeks/months of work have come
+together to convince me of the inability of the network to learn the bias vector that comes from something as seemingly
+simple as gravity, I am not feeling entirely discouraged. On the contrary this feels somewhat liberating. I am happy
+that I have some new direction to attack this problem from. I feel like this is actually what I was supposed to be doing
+all along, but I was apprehensive to walk off the beaten path of KNODE too much. I don't even know if this new method 
+that I will develop will really make sense to be called KNODE. I do think it is better this way however (despite the
+chagrin it has inflicted me with), as I will be forced to actually make some serious contribution with this work 
+rather than there just being some previous method which I can plug and play with. It does feel freeing to actually
+have some new direction to go. I have felt over the past week that I am stagnating at the optimum of this method
+with nothing good to show for it; every time I try a new configuration hoping that the problem miraculously solves 
+itself and yet nothing happens. Feels good to be rid of it.
 
 
 
