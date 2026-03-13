@@ -120,6 +120,16 @@ have some new direction to go. I have felt over the past week that I am stagnati
 with nothing good to show for it; every time I try a new configuration hoping that the problem miraculously solves 
 itself and yet nothing happens. Feels good to be rid of it.
 
+13 Mar 2026:
+I have been redeemed. It can learn gravity. It really make so much more sense to do it this way. Right now I just
+make a network for each body and have it take in the orientation and worldframe velocity and angular velocity and 
+predict a force on the body. And it works pretty damned well. It isn't perfect and I am 90% sure that is because 
+within the mujoco simulation pipeline actuators are set up to automatically combat gravity, so I need to go and disable
+that for the forward simulation used to create the datasets. I also think this is a formulation that will be able to
+work for fluid simulations. Looking back it really does not make sense to do things in terms of generalize coordinates
+given how complicated a map it is to go from world forces (which are easy to get based off some values) to generalized
+torques. So now it is doing something much simpler.
+
 
 
 

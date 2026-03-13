@@ -1,9 +1,9 @@
 {
     "name": "test", 
-    "dataset_name": "dataset_2",
-    "model_name": "mjx_panda_orig",
+    "dataset_name": "dataset_1",
+    "model_name": "mjx_panda",
     "should_load": true , 
-    "load_name": "test_body_1",
+    "load_name": "test_body_11",
     
     "batch_size": 200 , 
     "subset_size": "None" ,
@@ -15,7 +15,7 @@
     "l2": 27 , "_default_l2": "27" , 
     "l3": 0.3398 , "_default_l3": "0.3398" , 
     "l4": 0.268153 , "_default_l4": "0.268153" ,
-    
+   
     "is_gravity": false , 
     "is_fluid": false , 
     "is_const_wind": true ,
@@ -25,6 +25,6 @@
     "step_size": "0.002" ,
     
     "print_every": 5 , 
-    "which_to_show_at_end": 7 ,
+    "which_to_show_at_end": 11 ,
     "should_save": false
 }

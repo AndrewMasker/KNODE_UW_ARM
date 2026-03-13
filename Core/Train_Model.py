@@ -222,7 +222,7 @@ def trajectory_Train(model , mjx_data , num_batches , steps_strategy , lr , trai
             enqueue(1)
     iter_loader =  prefetch(iter_loader , size=5)
     
-    optim = optax.adabelief(lr)
+    optim = optax.adam(lr)
     diff_model , static_model = eqx.partition(model , filter_spec)
     opt_state = optim.init(eqx.filter(diff_model , eqx.is_inexact_array))
     
@@ -300,117 +300,9 @@ def trajectory_Train(model , mjx_data , num_batches , steps_strategy , lr , trai
         
         if batch_id%training_options["print_every"] == 0 or (batch_id+1)==num_batches:
             print(f"Batch: {batch_id+1} of {num_batches}. Loss: {loss}. Elapsed time: {time.time() - t1}")
-            print(model.knode_dynamics.residual_network.vector)
+#            print(model.knode_dynamics.residual_network.vectors)
             
     return model , loss_list
-
-
-def accel_Train_From_Trajectory(model , mjx_data , num_batches , steps_strategy , lr , training_options , filter_spec , loss_list):
-
-    dataset_path = "Datasets/" + training_options["dataset_name"] + ".zarr"
-    root = zarr.open(dataset_path)
-    step_size = root.attrs["dataset_options"]["step_size"]
-    num_steps = root.attrs["dataset_options"]["num_steps"]
-    ts = jnp.arange(0 , step_size*(num_steps) , step = step_size)
-    
-    
-    dataset = data_utils.zarr_Trajectory_Dataset(dataset_path , training_options["subset_size"])
-    dataset = (dataset
-               .shuffle(seed = int(time.time()))
-               .batch(batch_size = training_options["batch_size"] , drop_remainder = True)
-               .repeat())
-    
-    iter_loader = dataset.to_iter_dataset()    
-#        iter_loader = prefetch_to_device(dataset , size = 10 , devices = None)
-    iter_loader = iter(iter_loader)
-    
-    def prefetch(loader , size = 2):
-        queue = collections.deque()
-        def enqueue(n):
-            for _ in range(n):
-                queue.append(jtu.tree_map(jax.device_put , next(loader)))
-        enqueue(size)
-        while queue:
-            yield queue.popleft()
-            enqueue(1)
-    iter_loader =  prefetch(iter_loader , size=5)
-    
-    optim = optax.adabelief(lr)
-    diff_model , static_model = eqx.partition(model , filter_spec)
-    opt_state = optim.init(eqx.filter(diff_model , eqx.is_inexact_array))
-    
-    l0 = training_options["l0"]
-    l1 = training_options["l1"]
-    l2 = training_options["l2"]
-    l3 = training_options["l3"]
-    l4 = training_options["l4"]
-    l5 = training_options["l5"]
-    
-    @eqx.filter_value_and_grad
-    def grad_loss(diff_model , static_model , ts , qacc_act , ctrls , mjx_data , states):
-        model = eqx.combine(diff_model , static_model)
-#        pred_trajs = jax.vmap(model.knode_dynamics , (None , None , 0 , 0))(ts , mjx_data , init_states , ctrls)
-        
-        args = (mjx_data , ctrls , True)
-        
-#        qacc_pred = jax.vmap(model.knode_dynamics , (None , None , 0 , 0))(ts , state , args)
-        
-        qacc_pred = jax.vmap(jax.vmap(model.knode_dynamics , (None , 0 , (None , 0 , None))) , in_axes = (0 , 1 , (None , None , None)) , out_axes = 1)(ts , states , args)["qvel"]
-        
-#        get_data = lambda given_qpos , given_qvel : mjx.com_vel(model.knode_dynamics.mjx_model , mjx.com_pos(model.knode_dynamics.mjx_model , mjx.kinematics(model.knode_dynamics.mjx_model , mjx_data.replace(qpos=given_qpos , qvel=given_qvel))))
-#        get_data_traj = jax.vmap(jax.vmap(get_data , in_axes = (0 , 0) , out_axes = 0) , in_axes = (0 , 0) , out_axes = 0)
-
-#        print(qacc_pred)
-#        print(qacc_act)
-#        poop()
-#        
-#        print(qacc_pred.shape)
-        return l5*jnp.mean((qacc_pred - qacc_act)**2)
-             
-#                   
-    
-    @eqx.filter_jit
-    def make_step(model , ts , gt_trajs , ctrls , mjx_data):
-        diff_model , static_model = eqx.partition(model , filter_spec)
-        
-        qacc_act = jnp.gradient(gt_trajs["qvel"] , ts , axis = 1)
-#        print(qacc_act.shape)
-        
-        states = gt_trajs
-#        print(states["qpos"].shape)
-#        print(ctrls.shape)
-        loss , grads = grad_loss(diff_model , static_model , ts , qacc_act , ctrls , mjx_data , states)
-#            print(grads.knode_dynamics.residual_network.out_scale)
-#            print(grads.knode_dynamics.residual_network.mlp.layers[0].weight)
-#            print(grads.knode_dynamics.mjx_mixing_matrix)
-#            print(grads.knode_dynamics.res_mixing_matrix)
-#            poop()
-        updates , opt_states = optim.update(grads , opt_state)
-        diff_model = eqx.apply_updates(diff_model , updates)
-        model = eqx.combine(diff_model , static_model)
-        return loss , model , opt_states
-
-    _num_steps = int(num_steps*steps_strategy)
-    
-    for batch_id in range(num_batches):
-        t1 = time.time()
-        gt_trajs , ctrls = next(iter_loader)
-        gt_trajs = jtu.tree_map(jax.device_put , gt_trajs)
-        ctrls = jax.device_put(ctrls)
-        _ts = ts[0:_num_steps]
-        key = jr.key(int(time.time()))
-        start_step = int(jr.randint(key , (1,) , minval = 0 , maxval = num_steps - _num_steps)[0])
-        _gt_trajs = {"qpos": gt_trajs["qpos"][: , start_step:start_step+_num_steps , :] , "qvel": gt_trajs["qvel"][: , start_step:start_step+_num_steps , :]}
-        loss , model , opt_state = make_step(model , _ts , _gt_trajs , ctrls , mjx_data)
-        
-        loss_list.append(loss.item())
-        
-        if batch_id%training_options["print_every"] == 0 or (batch_id+1)==num_batches:
-            print(f"Batch: {batch_id+1} of {num_batches}. Loss: {loss}. Elapsed time: {time.time() - t1}")
-            print(model.knode_dynamics.residual_network.vector)
-            
-    return model , loss_list
-
 
 
 def train_Model(model_options , training_options):
@@ -436,7 +328,10 @@ def train_Model(model_options , training_options):
     filter_spec = eqx.tree_at(lambda tree: tree.knode_dynamics.res_mixing_matrix,
                       filter_spec , 
                       replace = True)
-    filter_spec = eqx.tree_at(lambda tree: tree.knode_dynamics.residual_network.vector,
+#    filter_spec = eqx.tree_at(lambda tree: tree.knode_dynamics.residual_network.vectors,
+#                      filter_spec , 
+#                      replace = True)
+    filter_spec = eqx.tree_at(lambda tree: tree.knode_dynamics.residual_network.body_networks,
                       filter_spec , 
                       replace = True)
 #    
@@ -461,7 +356,7 @@ if __name__ == "__main__":
     model_options = parse_Model_Specs(model_path)
     training_options = parse_Training_Specs(training_path)
     model , loss_list = train_Model(model_options , training_options)
-#    print(model.knode_dynamics.residual_network.vector)
+    
 #    print(model.knode_dynamics.res_mixing_matrix)
 #    print(model.knode_dynamics.mjx_mixing_matrix)
     if training_options["should_save"]:

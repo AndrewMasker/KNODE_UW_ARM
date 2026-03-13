@@ -12,47 +12,55 @@ class Residual_Network(eqx.Module):
 #    mlp: eqx.nn.MLP
 #    fe_sin_matrix: jax.Array# = eqx.field(static = True)
 #    fe_cos_matrix: jax.Array# = eqx.field(static = True)
-#    input_norm_add:     jax.Array# = eqx.field(static = True)
-#    input_norm_mult:    jax.Array# = eqx.field(static = True)
-#    output_denorm_add:  jax.Array# = eqx.field(static = True)
-#    output_denorm_mult: jax.Array# = eqx.field(static = True)
-    vector: jax.Array
+    input_norm_add:     jax.Array# = eqx.field(static = True)
+    input_norm_mult:    jax.Array# = eqx.field(static = True)
+    output_denorm_add:  jax.Array# = eqx.field(static = True)
+    output_denorm_mult: jax.Array# = eqx.field(static = True)
+    body_num: int = eqx.field(static = True)
+#    vectors: jax.Array
+    body_networks: list
 
     
-    def __init__(self , input_num , output_num , width , depth , qpos_ranges , qvel_max , ctrl_ranges , * ,  key):
-        key1 , key2 , key3 = jr.split(key , 3)
+    def __init__(self , body_num , input_num , output_num , width , depth , qpos_ranges , qvel_max , ctrl_ranges , * ,  key):
+        keys = jr.split(key , body_num)
 #        self.out_scale = jnp.array(10.0) #500
-#        self.mlp = eqx.nn.MLP(
-#            in_size = input_num, 
-#            out_size = 6 , #output_num, 
-#            width_size = width , 
-#            depth = depth , 
-#            activation = jax.nn.gelu ,
-#            key = key1)
-#        qpos_add = -qpos_ranges[: , 0]
-#        qvel_add =  qvel_max
-#        ctrl_add = -ctrl_ranges[: , 0]
-#        qpos_mult = 2/(qpos_ranges[: , 1] - qpos_ranges[: , 0])
-#        qvel_mult = 1/(qvel_max)
-#        ctrl_mult = 2/(ctrl_ranges[: , 1] - ctrl_ranges[: , 0])
+        self.body_networks = []
+        for i in range(body_num):
+            self.body_networks.append(eqx.nn.MLP(
+                in_size = 10, 
+                out_size = 6 , #output_num, 
+                width_size = width , 
+                depth = depth , 
+                activation = jax.nn.gelu ,
+                key = keys[i]))
+                
+        qpos_add = -qpos_ranges[: , 0]
+        qvel_add =  qvel_max
+        ctrl_add = -ctrl_ranges[: , 0]
+        qpos_mult = 2/(qpos_ranges[: , 1] - qpos_ranges[: , 0])
+        qvel_mult = 1/(qvel_max)
+        ctrl_mult = 2/(ctrl_ranges[: , 1] - ctrl_ranges[: , 0])
 #        
-#        self.input_norm_add  = jnp.concatenate((qpos_add , qvel_add , ctrl_add) , axis=0)
-#        self.input_norm_mult = jnp.concatenate((qpos_mult , qvel_mult , ctrl_mult) , axis=0)
-#        self.output_denorm_add = -qvel_add
-#        self.output_denorm_mult = 1/qvel_mult
-        
-#        self.fe_sin_matrix = jr.uniform(key2 , shape = (input_num , num_fe_features))*fe_std
-#        self.fe_cos_matrix = jr.uniform(key3 , shape = (input_num , num_fe_features))*fe_std
 
-        self.vector = (jr.uniform(key1 , shape = (3,))-.5)*2*10
+        self.input_norm_add  = jnp.concatenate((qpos_add , qvel_add , ctrl_add) , axis=0)
+        self.input_norm_mult = jnp.concatenate((qpos_mult , qvel_mult , ctrl_mult) , axis=0)
+        self.output_denorm_add = -qvel_add
+        self.output_denorm_mult = 1/qvel_mult
+        
+        self.body_num = body_num
+
+        
+#        self.vectors = (jr.uniform(key1 , shape = (body_num , 6))-.5)*2*10
         
     def __call__(self , y):
-#        normalized_input = self.input_norm_mult*(y + self.input_norm_add) - 1
-#
-#        mlp_output = self.mlp(normalized_input)
-#        limited_mlp_output = mlp_output#jax.nn.tanh(mlp_output)*self.out_scale#/self.out_scale)*self.out_scale
-#        denormalized_output = self.out_scale*limited_mlp_output#(limited_mlp_output + 1)*self.output_denorm_mult + self.output_denorm_add
-        return self.vector#denormalized_output
+        normalized_input = y #self.input_norm_mult*(y + self.input_norm_add) - 1
+        
+        vectors = self.body_networks[0](y[0])
+        vectors = jnp.expand_dims(vectors , 0)
+        for i in range(1 , self.body_num):
+            vectors = jnp.concatenate((vectors , jnp.expand_dims(self.body_networks[i](y[i]) , 0)) , 0)
+#       
+        return vectors#self.vectors#denormalized_output
     
 
 # This class holds the combined state dynamics
@@ -76,35 +84,35 @@ class KNODE_Dynamics(eqx.Module):
         
         mjx_data , ctrl , with_learned = args
         mjx_data = mjx_data.replace(qpos = qpos , qvel = qvel , ctrl = ctrl)
-#        mjx_data = mjx.forward(self.mjx_model , mjx_data)
-#        mjx_qacc = mjx_data.qacc
-
-#        mjx_data = mjx.kinematics(self.mjx_model , mjx_data)
-#        mjx_data = mjx.com_pos(self.mjx_model , mjx_data)
-#        mjx_data = mjx.com_vel(self.mjx_model, mjx_data)
-#        mjx_data = mjx.crb(self.mjx_model , mjx_data)
-#        mjx_data = mjx.factor_m(self.mjx_model , mjx_data)
-#        mjx_data = mjx.rne(self.mjx_model , mjx_data)
-#        mjx_data = mjx.passive(self.mjx_model , mjx_data)
-#        mjx_data = mjx.fwd_actuation(self.mjx_model , mjx_data)
-#        #mjx_data = mjx.collision(self.mjx_model , mjx_data)
-#        #mjx_data = mjx.make_constraint(self.mjx_model , mjx_data)
-#        mjx_data = mjx.fwd_acceleration(self.mjx_model , mjx_data)
-#        mjx_qacc = mjx_data.qacc_smooth
         
-
-      
-#        if with_learned:
-#            mjx_data = mjx_diff.forward(self.mjx_model , mjx_data , self.residual_network(jnp.concatenate((qpos , qvel , ctrl))))
-#            mjx_qacc = mjx_data.qacc
-#            
-#            final_qacc = mjx_qacc# + res_state_vel @ self.res_mixing_matrix
-#        else:
-#            mjx_data = mjx_diff.forward(self.mjx_model , mjx_data , 0)
-#            mjx_qacc = mjx_data.qacc
-#            final_qacc = mjx_qacc
+        mjx_data = mjx_diff.fwd_position(self.mjx_model , mjx_data)
+        mjx_data = mjx_diff.fwd_velocity(self.mjx_model , mjx_data)
+        
+        xquat = mjx_data.xquat
+        cvel = mjx_data.cvel
+        bf_w = cvel[:,:3]
+        bf_v = cvel[:,3:]
+        
+        rot_mat = mjx_data.xmat
+#        print(rot_mat.shape)
+#        print(bf_w.shape)
+#        quit()
+        
+        bf_to_world = lambda mat , x: mat @ x
+        
+        bf_to_world_mapped = jax.vmap(bf_to_world , (0 , 0))
+        
+        world_w = bf_to_world_mapped(rot_mat , bf_w)
+        world_v = bf_to_world_mapped(rot_mat , bf_v)
+        
+        network_inputs = jnp.concatenate((xquat , world_w , world_v) , 1)
+        
+        vectors = self.residual_network(network_inputs)*with_learned
+        mjx_data = mjx_data.replace(xfrc_applied=vectors)
             
-        mjx_data = mjx_diff.forward(self.mjx_model , mjx_data , with_learned*self.residual_network(jnp.concatenate((qpos , qvel , ctrl))))
+
+            
+        mjx_data = mjx_diff.forward(self.mjx_model , mjx_data)# , with_learned*self.residual_network(jnp.concatenate((qpos , qvel , ctrl))))
         mjx_qacc = mjx_data.qacc
 
         final_qacc = mjx_qacc# + res_state_vel @ self.res_mixing_matrix
@@ -119,12 +127,12 @@ class KNODE(eqx.Module):
     def __init__(self , key , mjx_model , width , depth , qvel_max ):
         
         output_num = mjx_model.nq
-        input_num = 2*output_num + mjx_model.nu
+        input_num = mjx_model.nu#2*output_num + mjx_model.nu
         
         qpos_ranges = mjx_model.jnt_range
         ctrl_ranges = mjx_model.actuator_ctrlrange
         
-        network_args = (input_num , output_num , width , depth , qpos_ranges , qvel_max , ctrl_ranges)
+        network_args = (mjx_model.nbody , input_num , output_num , width , depth , qpos_ranges , qvel_max , ctrl_ranges)
         
         self.knode_dynamics = KNODE_Dynamics(mjx_model , network_args , key)
         
