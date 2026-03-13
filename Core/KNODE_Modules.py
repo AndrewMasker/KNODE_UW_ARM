@@ -8,50 +8,51 @@ import Utils.MJX_Diff as mjx_diff
 
 # This class holds the neural network velocity field residuals of KNODE
 class Residual_Network(eqx.Module):
-    out_scale: jax.Array
-    mlp: eqx.nn.MLP
+#    out_scale: jax.Array
+#    mlp: eqx.nn.MLP
 #    fe_sin_matrix: jax.Array# = eqx.field(static = True)
 #    fe_cos_matrix: jax.Array# = eqx.field(static = True)
-    input_norm_add:     jax.Array# = eqx.field(static = True)
-    input_norm_mult:    jax.Array# = eqx.field(static = True)
-    output_denorm_add:  jax.Array# = eqx.field(static = True)
-    output_denorm_mult: jax.Array# = eqx.field(static = True)
+#    input_norm_add:     jax.Array# = eqx.field(static = True)
+#    input_norm_mult:    jax.Array# = eqx.field(static = True)
+#    output_denorm_add:  jax.Array# = eqx.field(static = True)
+#    output_denorm_mult: jax.Array# = eqx.field(static = True)
+    vector: jax.Array
 
     
     def __init__(self , input_num , output_num , width , depth , qpos_ranges , qvel_max , ctrl_ranges , * ,  key):
         key1 , key2 , key3 = jr.split(key , 3)
-        self.out_scale = jnp.array(100.0) #500
-        self.mlp = eqx.nn.MLP(
-            in_size = input_num, 
-            out_size = output_num, 
-            width_size = width , 
-            depth = depth , 
-            activation = jax.nn.gelu ,
-            key = key1)
-        qpos_add = -qpos_ranges[: , 0]
-        qvel_add =  qvel_max
-        ctrl_add = -ctrl_ranges[: , 0]
-        qpos_mult = 2/(qpos_ranges[: , 1] - qpos_ranges[: , 0])
-        qvel_mult = 1/(qvel_max)
-        ctrl_mult = 2/(ctrl_ranges[: , 1] - ctrl_ranges[: , 0])
-        
-        self.input_norm_add  = jnp.concatenate((qpos_add , qvel_add , ctrl_add) , axis=0)
-        self.input_norm_mult = jnp.concatenate((qpos_mult , qvel_mult , ctrl_mult) , axis=0)
-        self.output_denorm_add = -qvel_add
-        self.output_denorm_mult = 1/qvel_mult
+#        self.out_scale = jnp.array(10.0) #500
+#        self.mlp = eqx.nn.MLP(
+#            in_size = input_num, 
+#            out_size = 6 , #output_num, 
+#            width_size = width , 
+#            depth = depth , 
+#            activation = jax.nn.gelu ,
+#            key = key1)
+#        qpos_add = -qpos_ranges[: , 0]
+#        qvel_add =  qvel_max
+#        ctrl_add = -ctrl_ranges[: , 0]
+#        qpos_mult = 2/(qpos_ranges[: , 1] - qpos_ranges[: , 0])
+#        qvel_mult = 1/(qvel_max)
+#        ctrl_mult = 2/(ctrl_ranges[: , 1] - ctrl_ranges[: , 0])
+#        
+#        self.input_norm_add  = jnp.concatenate((qpos_add , qvel_add , ctrl_add) , axis=0)
+#        self.input_norm_mult = jnp.concatenate((qpos_mult , qvel_mult , ctrl_mult) , axis=0)
+#        self.output_denorm_add = -qvel_add
+#        self.output_denorm_mult = 1/qvel_mult
         
 #        self.fe_sin_matrix = jr.uniform(key2 , shape = (input_num , num_fe_features))*fe_std
 #        self.fe_cos_matrix = jr.uniform(key3 , shape = (input_num , num_fe_features))*fe_std
+
+        self.vector = (jr.uniform(key1 , shape = (3,))-.5)*2*10
         
     def __call__(self , y):
-        normalized_input = self.input_norm_mult*(y + self.input_norm_add) - 1
-#        fe_sin_input = jnp.sin(normalized_input @ self.fe_sin_matrix)
-#        fe_cos_input = jnp.cos(normalized_input @ self.fe_cos_matrix)
-#        fe_input = jnp.concatenate((fe_sin_input , fe_cos_input) , 0)
-        mlp_output = self.mlp(normalized_input)
-        limited_mlp_output = mlp_output#jax.nn.tanh(mlp_output)*self.out_scale#/self.out_scale)*self.out_scale
-        denormalized_output = self.out_scale*limited_mlp_output#(limited_mlp_output + 1)*self.output_denorm_mult + self.output_denorm_add
-        return denormalized_output
+#        normalized_input = self.input_norm_mult*(y + self.input_norm_add) - 1
+#
+#        mlp_output = self.mlp(normalized_input)
+#        limited_mlp_output = mlp_output#jax.nn.tanh(mlp_output)*self.out_scale#/self.out_scale)*self.out_scale
+#        denormalized_output = self.out_scale*limited_mlp_output#(limited_mlp_output + 1)*self.output_denorm_mult + self.output_denorm_add
+        return self.vector#denormalized_output
     
 
 # This class holds the combined state dynamics

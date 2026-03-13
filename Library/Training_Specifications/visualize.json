@@ -3,7 +3,7 @@
     "dataset_name": "dataset_2",
     "model_name": "mjx_panda_orig",
     "should_load": true , 
-    "load_name": "test_dataset_2_8",
+    "load_name": "test_body_1",
     
     "batch_size": 200 , 
     "subset_size": "None" ,

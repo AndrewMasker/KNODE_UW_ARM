@@ -60,7 +60,7 @@ def fwd_position(m: Model, d: Data) -> Data:
 
 
 @named_scope
-def fwd_velocity(m: Model, d: Data) -> Data:
+def fwd_velocity(m: Model, d: Data , residual) -> Data:
   """Velocity-dependent computations."""
 #  if not isinstance(m._impl, ModelJAX) or not isinstance(d._impl, DataJAX):
 #    raise ValueError('fwd_velocity requires JAX backend implementation.')
@@ -71,7 +71,7 @@ def fwd_velocity(m: Model, d: Data) -> Data:
   })
   d = smooth.com_vel(m, d)
   d = passive.passive(m, d)
-  d = smooth.rne(m, d)
+  d = rne(m, d , residual)
 #  d = smooth.tendon_bias(m, d)
   return d
 
@@ -226,10 +226,10 @@ def fwd_actuation(m: Model, d: Data) -> Data:
 
 
 @named_scope
-def fwd_acceleration(m: Model, d: Data , residual) -> Data:
+def fwd_acceleration(m: Model, d: Data) -> Data:
   """Add up all non-constraint forces, compute qacc_smooth."""
   qfrc_applied = d.qfrc_applied + support.xfrc_accumulate(m, d)
-  qfrc_smooth = d.qfrc_passive - d.qfrc_bias + d.qfrc_actuator + qfrc_applied + residual
+  qfrc_smooth = d.qfrc_passive - d.qfrc_bias + d.qfrc_actuator + qfrc_applied
   qacc_smooth = smooth.solve_m(m, d, qfrc_smooth)
   d = d.replace(qfrc_smooth=qfrc_smooth, qacc_smooth=qacc_smooth)
   return d
@@ -249,10 +249,10 @@ def forward(m: Model, d: Data , residual) -> Data:
 
   d = fwd_position(m, d)
 #  d = sensor.sensor_pos(m, d)
-  d = fwd_velocity(m, d)
+  d = fwd_velocity(m, d , residual)
 #  d = sensor.sensor_vel(m, d)
   d = fwd_actuation(m, d)
-  d = fwd_acceleration(m, d , residual)
+  d = fwd_acceleration(m, d)
 
 #  if d._impl.efc_J.size == 0:
 #    d = d.replace(qacc=d.qacc_smooth)
@@ -263,6 +263,58 @@ def forward(m: Model, d: Data , residual) -> Data:
 #  d = sensor.sensor_acc(m, d)
 
   return d
+  
+  
+  
+def rne(m: Model, d: Data , residual , flg_acc: bool = False) -> Data:
+  """Computes inverse dynamics using the recursive Newton-Euler algorithm.
+
+  flg_acc=False removes inertial term.
+  """
+  if not isinstance(m._impl, ModelJAX) or not isinstance(d._impl, DataJAX):
+    raise ValueError('rne requires JAX backend implementation.')
+
+  # forward scan over tree: accumulate link center of mass acceleration
+  def cacc_fn(cacc, cdof_dot, qvel, cdof, qacc):
+    if cacc is None:
+      if m.opt.disableflags & DisableBit.GRAVITY:
+        cacc = jp.zeros((6,))
+      else:
+        cacc = jp.concatenate((jp.zeros((3,)), residual))#jp.concatenate((jp.zeros((3,)), -m.opt.gravity))
+
+    cacc += jp.sum(jax.vmap(jp.multiply)(cdof_dot, qvel), axis=0)
+
+    # cacc += cdof * qacc
+    if flg_acc:
+      cacc += jp.sum(jax.vmap(jp.multiply)(cdof, qacc), axis=0)
+
+    return cacc
+
+  cacc = scan.body_tree(
+      m, cacc_fn, 'vvvv', 'b', d.cdof_dot, d.qvel, d.cdof, d.qacc
+  )
+
+  def frc(cinert, cacc, cvel):
+    frc = math.inert_mul(cinert, cacc)
+    frc += math.motion_cross_force(cvel, math.inert_mul(cinert, cvel))
+
+    return frc
+
+  loc_cfrc = jax.vmap(frc)(d._impl.cinert, cacc, d.cvel)
+
+  # backward scan up tree: accumulate body forces
+  def cfrc_fn(cfrc_child, cfrc):
+    if cfrc_child is not None:
+      cfrc += cfrc_child
+    return cfrc
+
+  cfrc = scan.body_tree(m, cfrc_fn, 'b', 'b', loc_cfrc, reverse=True)
+  qfrc_bias = jax.vmap(jp.dot)(d.cdof, cfrc[jp.array(m.dof_bodyid)])
+
+  d = d.replace(qfrc_bias=qfrc_bias)
+
+  return d
+
   
   
   

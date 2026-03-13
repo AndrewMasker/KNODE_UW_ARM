@@ -300,6 +300,7 @@ def trajectory_Train(model , mjx_data , num_batches , steps_strategy , lr , trai
         
         if batch_id%training_options["print_every"] == 0 or (batch_id+1)==num_batches:
             print(f"Batch: {batch_id+1} of {num_batches}. Loss: {loss}. Elapsed time: {time.time() - t1}")
+            print(model.knode_dynamics.residual_network.vector)
             
     return model , loss_list
 
@@ -406,6 +407,7 @@ def accel_Train_From_Trajectory(model , mjx_data , num_batches , steps_strategy 
         
         if batch_id%training_options["print_every"] == 0 or (batch_id+1)==num_batches:
             print(f"Batch: {batch_id+1} of {num_batches}. Loss: {loss}. Elapsed time: {time.time() - t1}")
+            print(model.knode_dynamics.residual_network.vector)
             
     return model , loss_list
 
@@ -422,9 +424,9 @@ def train_Model(model_options , training_options):
     filter_spec = jtu.tree_map(lambda _: False , model)
     
                               
-    filter_spec = eqx.tree_at(lambda tree: tree.knode_dynamics.residual_network.mlp,
-                      filter_spec , 
-                      replace = True)
+#    filter_spec = eqx.tree_at(lambda tree: tree.knode_dynamics.residual_network.mlp,
+#                      filter_spec , 
+#                      replace = True)
 #    filter_spec = eqx.tree_at(lambda tree: tree.knode_dynamics.residual_network.out_scale,
 #                      filter_spec , 
 #                      replace = True)
@@ -434,7 +436,10 @@ def train_Model(model_options , training_options):
     filter_spec = eqx.tree_at(lambda tree: tree.knode_dynamics.res_mixing_matrix,
                       filter_spec , 
                       replace = True)
-    
+    filter_spec = eqx.tree_at(lambda tree: tree.knode_dynamics.residual_network.vector,
+                      filter_spec , 
+                      replace = True)
+#    
     
     
     for num_batches , steps_strategy , lr in zip(training_options["num_batches_strategy"] , training_options["steps_strategy"] , training_options["lr_strategy"]):
@@ -456,7 +461,7 @@ if __name__ == "__main__":
     model_options = parse_Model_Specs(model_path)
     training_options = parse_Training_Specs(training_path)
     model , loss_list = train_Model(model_options , training_options)
-    
+#    print(model.knode_dynamics.residual_network.vector)
 #    print(model.knode_dynamics.res_mixing_matrix)
 #    print(model.knode_dynamics.mjx_mixing_matrix)
     if training_options["should_save"]:
