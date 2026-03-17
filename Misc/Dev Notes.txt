@@ -130,6 +130,8 @@ work for fluid simulations. Looking back it really does not make sense to do thi
 given how complicated a map it is to go from world forces (which are easy to get based off some values) to generalized
 torques. So now it is doing something much simpler.
 
+17 Mar 2026:
+It can learn to compensate for fluids. Yipee.
 
 
 

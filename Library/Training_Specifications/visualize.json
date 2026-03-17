@@ -1,9 +1,9 @@
 {
     "name": "test", 
-    "dataset_name": "dataset_1",
+    "dataset_name": "dataset_3_fluid",
     "model_name": "mjx_panda",
     "should_load": true , 
-    "load_name": "test_body_11",
+    "load_name": "test_fluid_2",
     
     "batch_size": 200 , 
     "subset_size": "None" ,
@@ -16,7 +16,7 @@
     "l3": 0.3398 , "_default_l3": "0.3398" , 
     "l4": 0.268153 , "_default_l4": "0.268153" ,
    
-    "is_gravity": false , 
+    "is_gravity": true , 
     "is_fluid": false , 
     "is_const_wind": true ,
     "wind": "0 0 0" , 
@@ -25,6 +25,6 @@
     "step_size": "0.002" ,
     
     "print_every": 5 , 
-    "which_to_show_at_end": 11 ,
+    "which_to_show_at_end": 7 ,
     "should_save": false
 }

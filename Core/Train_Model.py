@@ -31,8 +31,8 @@ ARGUMENT AND SPECIFICATION PARSING
 
 def return_Arguments():
     parser = argparse.ArgumentParser()
-    parser.add_argument("-m" , "--model_specs" , type = str , default = "model_2")
-    parser.add_argument("-t" , "--training_specs" , type = str , default = "training_1")
+    parser.add_argument("-m" , "--model_specs" , type = str , default = "model_fluid")
+    parser.add_argument("-t" , "--training_specs" , type = str , default = "training_fluid")
     
     args = parser.parse_args()
     
