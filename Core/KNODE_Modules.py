@@ -94,9 +94,7 @@ class KNODE_Dynamics(eqx.Module):
         bf_v = cvel[:,3:]
         
         rot_mat = mjx_data.xmat
-#        print(rot_mat.shape)
-#        print(bf_w.shape)
-#        quit()
+
         
         bf_to_world = lambda mat , x: mat @ x
         
@@ -140,30 +138,7 @@ class KNODE(eqx.Module):
     def __call__(self , ts , mjx_data , init_state , ctrl , with_learned=True):
         mjx_data = mjx_data.replace(qpos = init_state["qpos"] , qvel = init_state["qvel"] , ctrl = ctrl)
         
-#        
-#        qpos = init_state["qpos"]
-#        qvel = init_state["qvel"]
-#        
-#        #mjx_data , ctrl , with_learned = args
-#        mjx_data = mjx_data.replace(qpos = qpos , qvel = qvel , ctrl = ctrl)
-#        #mjx_data = mjx.forward(self.mjx_model , mjx_data)
-#        #qacc = mjx_data.qacc
-#
-#        mjx_data = mjx.kinematics(self.knode_dynamics.mjx_model , mjx_data)
-#        mjx_data = mjx.com_pos(self.knode_dynamics.mjx_model , mjx_data)
-#        mjx_data = mjx.com_vel(self.knode_dynamics.mjx_model, mjx_data)
-#        mjx_data = mjx.crb(self.knode_dynamics.mjx_model , mjx_data)
-#        mjx_data = mjx.factor_m(self.knode_dynamics.mjx_model , mjx_data)
-#        mjx_data = mjx.rne(self.knode_dynamics.mjx_model , mjx_data)
-#        mjx_data = mjx.passive(self.knode_dynamics.mjx_model , mjx_data)
-#        mjx_data = mjx.fwd_actuation(self.knode_dynamics.mjx_model , mjx_data)
-#        #mjx_data = mjx.collision(self.mjx_model , mjx_data)
-#        #mjx_data = mjx.make_constraint(self.mjx_model , mjx_data)
-#        mjx_data = mjx.fwd_acceleration(self.knode_dynamics.mjx_model , mjx_data)
-#        mjx_qacc = mjx_data.qacc_smooth
-#        
-#        print(mjx_qacc)
-#        poop()
+
         
         
         solution = diffrax.diffeqsolve(
