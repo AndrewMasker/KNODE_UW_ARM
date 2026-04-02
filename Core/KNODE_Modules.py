@@ -12,10 +12,10 @@ class Residual_Network(eqx.Module):
 #    mlp: eqx.nn.MLP
 #    fe_sin_matrix: jax.Array# = eqx.field(static = True)
 #    fe_cos_matrix: jax.Array# = eqx.field(static = True)
-    input_norm_add:     jax.Array# = eqx.field(static = True)
-    input_norm_mult:    jax.Array# = eqx.field(static = True)
-    output_denorm_add:  jax.Array# = eqx.field(static = True)
-    output_denorm_mult: jax.Array# = eqx.field(static = True)
+#    input_norm_add:     jax.Array# = eqx.field(static = True)
+#    input_norm_mult:    jax.Array# = eqx.field(static = True)
+#    output_denorm_add:  jax.Array# = eqx.field(static = True)
+#    output_denorm_mult: jax.Array# = eqx.field(static = True)
     body_num: int = eqx.field(static = True)
 #    vectors: jax.Array
     body_networks: list
@@ -27,25 +27,25 @@ class Residual_Network(eqx.Module):
         self.body_networks = []
         for i in range(body_num):
             self.body_networks.append(eqx.nn.MLP(
-                in_size = 10, 
+                in_size = 6, 
                 out_size = 6 , #output_num, 
                 width_size = width , 
                 depth = depth , 
                 activation = jax.nn.gelu ,
                 key = keys[i]))
                 
-        qpos_add = -qpos_ranges[: , 0]
-        qvel_add =  qvel_max
-        ctrl_add = -ctrl_ranges[: , 0]
-        qpos_mult = 2/(qpos_ranges[: , 1] - qpos_ranges[: , 0])
-        qvel_mult = 1/(qvel_max)
-        ctrl_mult = 2/(ctrl_ranges[: , 1] - ctrl_ranges[: , 0])
+#        qpos_add = -qpos_ranges[: , 0]
+#        qvel_add =  qvel_max
+#        ctrl_add = -ctrl_ranges[: , 0]
+#        qpos_mult = 2/(qpos_ranges[: , 1] - qpos_ranges[: , 0])
+#        qvel_mult = 1/(qvel_max)
+#        ctrl_mult = 2/(ctrl_ranges[: , 1] - ctrl_ranges[: , 0])
 #        
 
-        self.input_norm_add  = jnp.concatenate((qpos_add , qvel_add , ctrl_add) , axis=0)
-        self.input_norm_mult = jnp.concatenate((qpos_mult , qvel_mult , ctrl_mult) , axis=0)
-        self.output_denorm_add = -qvel_add
-        self.output_denorm_mult = 1/qvel_mult
+#        self.input_norm_add  = jnp.concatenate((qpos_add , qvel_add , ctrl_add) , axis=0)
+#        self.input_norm_mult = jnp.concatenate((qpos_mult , qvel_mult , ctrl_mult) , axis=0)
+#        self.output_denorm_add = -qvel_add
+#        self.output_denorm_mult = 1/qvel_mult
         
         self.body_num = body_num
 
@@ -66,16 +66,16 @@ class Residual_Network(eqx.Module):
 # This class holds the combined state dynamics
 class KNODE_Dynamics(eqx.Module):
     residual_network: Residual_Network
-    mjx_mixing_matrix: jax.Array
-    res_mixing_matrix: jax.Array
+#    mjx_mixing_matrix: jax.Array
+#    res_mixing_matrix: jax.Array
     mjx_model: mjx.Model# = eqx.field(static = True)
     
     def __init__(self , mjx_model , network_args , key):
         keys = jr.split(key , 3)
         self.mjx_model = mjx_model
         self.residual_network = Residual_Network(*network_args , key=keys[0])
-        self.res_mixing_matrix = jr.uniform(keys[1] , (network_args[1] , network_args[1]) , minval=-1.0 , maxval=1.0)
-        self.mjx_mixing_matrix = jnp.eye(network_args[1]) + jr.uniform(keys[2] , (network_args[1] , network_args[1]) , minval=-.1 , maxval=.1)
+#        self.res_mixing_matrix = jr.uniform(keys[1] , (network_args[1] , network_args[1]) , minval=-1.0 , maxval=1.0)
+#        self.mjx_mixing_matrix = jnp.eye(network_args[1]) + jr.uniform(keys[2] , (network_args[1] , network_args[1]) , minval=-.1 , maxval=.1)
         
         
     def __call__(self , t , state , args):
@@ -88,25 +88,39 @@ class KNODE_Dynamics(eqx.Module):
         mjx_data = mjx_diff.fwd_position(self.mjx_model , mjx_data)
         mjx_data = mjx_diff.fwd_velocity(self.mjx_model , mjx_data)
         
-        xquat = mjx_data.xquat
+#        xquat = mjx_data.xquat
         cvel = mjx_data.cvel
-        bf_w = cvel[:,:3]
-        bf_v = cvel[:,3:]
+        world_w = cvel[:,:3]
+        world_v = cvel[:,3:]
         
-        rot_mat = mjx_data.xmat
+        bf_to_world_mat = mjx_data.ximat
+        world_to_bf_mat = jnp.matrix_transpose(bf_to_world_mat)
 
         
-        bf_to_world = lambda mat , x: mat @ x
+        matmul = lambda mat , x: mat @ x
         
-        bf_to_world_mapped = jax.vmap(bf_to_world , (0 , 0))
+        matmul_mapped = jax.vmap(matmul , (0 , 0))
         
-        world_w = bf_to_world_mapped(rot_mat , bf_w)
-        world_v = bf_to_world_mapped(rot_mat , bf_v)
+#        world_w = bf_to_world_mapped(rot_mat , bf_w)
+#        world_v = bf_to_world_mapped(rot_mat , bf_v)
+
+        bf_w = matmul_mapped(world_to_bf_mat , world_w)
+        bf_v = matmul_mapped(world_to_bf_mat , world_v)
         
-        network_inputs = jnp.concatenate((xquat , world_w , world_v) , 1)
+#        print(bf_v)
+#        print(bf_w)
+        
+        network_inputs = jnp.concatenate((bf_w , bf_v) , 1)
         
         vectors = self.residual_network(network_inputs)*with_learned
-        mjx_data = mjx_data.replace(xfrc_applied=vectors)
+        bf_torque = vectors[: , :3]
+        bf_force = vectors[: , 3:]
+#        print(bf_torque)
+#        print(bf_force)
+        world_torque = matmul_mapped(bf_to_world_mat , bf_torque)
+        world_force = matmul_mapped(bf_to_world_mat , bf_force)
+        world_6_force = jnp.concatenate((world_torque , world_force) , 1)
+        mjx_data = mjx_data.replace(xfrc_applied=world_6_force)
             
 
             
@@ -135,7 +149,7 @@ class KNODE(eqx.Module):
         self.knode_dynamics = KNODE_Dynamics(mjx_model , network_args , key)
         
         
-    def __call__(self , ts , mjx_data , init_state , ctrl , with_learned=True):
+    def __call__(self , ts , mjx_data , init_state , ctrl , with_learned=jnp.array(1.0)):
         mjx_data = mjx_data.replace(qpos = init_state["qpos"] , qvel = init_state["qvel"] , ctrl = ctrl)
         
 

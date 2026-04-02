@@ -32,6 +32,10 @@ def create_XML_From_Options(options):
 # and converts it into the mjx_model and data
 def init_mjx_model(xml):
     model = mujoco.MjModel.from_xml_string(xml)
+    
+    model.opt.disableflags |= mujoco.mjtDisableBit.mjDSBL_CONSTRAINT
+    model.opt.disableflags |= mujoco.mjtDisableBit.mjDSBL_LIMIT
+    
     mjx_model = mjx.put_model(model)
     mjx_data = mjx.make_data(model)
     
@@ -39,6 +43,10 @@ def init_mjx_model(xml):
     
 def init_mujoco_model(xml):
     model = mujoco.MjModel.from_xml_string(xml)
+    
+    model.opt.disableflags |= mujoco.mjtDisableBit.mjDSBL_CONSTRAINT
+    model.opt.disableflags |= mujoco.mjtDisableBit.mjDSBL_LIMIT
+    
     data = mujoco.MjData(model)
     
     return model , data

@@ -12,7 +12,7 @@ from mujoco.mjx._src import passive
 from mujoco.mjx._src import scan
 from mujoco.mjx._src import sensor
 from mujoco.mjx._src import smooth
-from mujoco.mjx._src import solver
+from Utils import MJX_Solver_Diff as solver
 from mujoco.mjx._src import support
 # pylint: disable=g-importing-member
 from mujoco.mjx._src.types import BiasType
@@ -258,8 +258,18 @@ def forward(m: Model, d: Data) -> Data:
 #    d = d.replace(qacc=d.qacc_smooth)
 #    return d
 
+  """
+  If using solver
+  """
 #  d = named_scope(solver.solve)(m, d)
+  
+  
+  """
+  If no collisions
+  """
   d = d.replace(qacc=d.qacc_smooth)
+
+
 #  d = sensor.sensor_acc(m, d)
 
   return d

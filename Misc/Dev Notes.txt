@@ -133,6 +133,21 @@ torques. So now it is doing something much simpler.
 17 Mar 2026:
 It can learn to compensate for fluids. Yipee.
 
+2 Apr 2026:
+I was too excited the last time. It really only sort of works for fluids. There were some serious issues relating to
+the reference frames of passed in vectors which I have now sorted out at great length. There were also issues with
+there being a difference between the id used for getting trajectories in the visualization and training, which was
+causing some confusion. The current model is capable of memorizing small subsets of the dataset, but seems to struggle
+when given more data. There is a weird thing where the trajectories 199, 197, 195 are the same and bad, while 198, 196,
+194 are the same and bad. Nevermind, quite. I am halucinating. 199 is bad0.922473, 195 is bad, 197 is good. 200 is good somehow 0.015218873,
+despite it not being in the subset I trained. 201 is not very good, but it definitely isnt horrible0.45769763. 202 is pretty good 0.031425808.
+203 is pretty good too 0.079215564. This is test_fluid_no_coll_12 that I am talking about here. There is actually a remarkable amount
+of generalization happening that I wouldnt expect, given that this one was trained on only 200 trajectories. 307 is
+pretty bad but looks not half bad 1.5056024. 308 is not very good but honestly not very bad 0.2310349. 309 is pretty
+good 0.07168173. I need to work more on this. I made the networks smaller, so maybe that is helping me avoid some weird
+overfitting issue. I will try to train on the whole dataset or even larger subsets tomorrow with these small networks
+to see what happens.
+
 
 
 

@@ -56,7 +56,7 @@ class zarr_Trajectory_Dataset(grain.MapDataset):
 
     def __getitem__(self , idx):
         grp = self.root[self.keys[idx%self.length]]
-        traj = {"qpos": grp['qpos'] , "qvel": grp['qvel']}
+        traj = {"qpos": grp['qpos'][:] , "qvel": grp['qvel'][:]}
         ctrl = grp['ctrl'][0 , :]
 
         return traj , ctrl
