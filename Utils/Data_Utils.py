@@ -41,7 +41,9 @@ class zarr_Trajectory_Dataset(grain.MapDataset):
     def __init__(self , root_path , subset_size):
         super().__init__()
         self.root = zarr.open(root_path , mode = 'r')
-        self.keys = list(self.root.keys())
+        self.keys = sorted(self.root.keys(), key=lambda k: int(k.split('_')[-1]))
+#        t = keys[trajectory_number]
+#        self.keys = list(self.root.keys())
         self.len_keys = len(self.keys)
         if subset_size == "None":
             self.length = self.len_keys

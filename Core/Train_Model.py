@@ -128,8 +128,9 @@ def visualize_Trained_Model(model , model_options , training_options , loss_list
     _ , mjx_data = mj_utils.init_mjx_model(xml)
     
     trajectory_number = training_options["which_to_show_at_end"]
-    keys = list(root.keys())
+    keys = sorted(root.keys(), key=lambda k: int(k.split('_')[-1]))
     t = keys[trajectory_number]
+    print(t)
     d = root[t]#"trajectory_" + str(trajectory_number)
     gt_qpos_traj = d["qpos"][:]
 #    print(d["qpos"])
@@ -222,7 +223,7 @@ def trajectory_Train(model , mjx_data , num_batches , steps_strategy , lr , trai
     
     dataset = data_utils.zarr_Trajectory_Dataset(dataset_path , training_options["subset_size"])
     dataset = (dataset
-#               .shuffle(seed = int(time.time()))
+               .shuffle(seed = int(time.time()))
                .batch(batch_size = training_options["batch_size"] , drop_remainder = True)
                .repeat())
     

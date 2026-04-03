@@ -148,6 +148,50 @@ good 0.07168173. I need to work more on this. I made the networks smaller, so ma
 overfitting issue. I will try to train on the whole dataset or even larger subsets tomorrow with these small networks
 to see what happens.
 
+3 Apr 2026:
+I started by training a model with the same specs as the end of yesterday, and testing it. The results were similar, 
+but I decided to visualize trajectory 212 multiple times in a row, 5 times exactly, and it, for some reason, switches
+between two different trajectories. In one of them it performs well, with a loss of .12894112, and the other it performs
+poorly, with a loss of 1.348944. I am not sure why there is a difference, or what is causing it.
+
+I believe I have fixed it. It was caused by the fact that zarr keys are not returned in a deterministic manner, meaning
+that a random trajectory ordering was returned each time the root.keys() function was called. The flipping wasn't actually
+between two trajectories, it was random, the losses looked the same. Fixing this should hoepfully make things make more
+sense. I am still seeing generalization.
+
+Okay so I trained now on 1000 samples rather than 200 and the performance is lower, but the generalization is still in
+effect. Obviously the performance is reduced outside of the training set, but it is still generalization. I think
+increasing network size is the next step. from 
+{
+    "depth": 3 , 
+    "width": 20 , 
+    "num_networks": 1
+}
+to
+{
+    "depth": 5 , 
+    "width": 50 , 
+    "num_networks": 1
+}
+I also think the learning rate is a little low so I am increasing it from 0.01 to .03.
+
+I think that learning rate was too high, as I got some significant chattering, but the lower end of the loss was lower
+by quite a bit. I actually owered it to .009. test_fluid_april_4 performs very well on the data it is trained on, but
+is poor on other data. It is not terrible, but yeah.
+
+The model test_fluid_3_april_5 was trained with the same hyperparameters as the previous one, just increasing the 
+number of samples to 10000. This resulted in a loss plataeu much much high than the previous, 1000 sample run. I think
+I'll see what happens when I start with the model from test_fluid_3_april_4 and up the number of samples to 10000.
+
+I did test_fluid_3_april_7 with the same as test_fluid_3_april_4 and it had the same results, just having a hiccup at
+the end resulting in a spike in loss. 
+
+It seems clear to me that the network is at the very least capable of memorizing up to 1000 trajectories to very high
+fidelity. I think what is plaguing me at this moment is some issue in the loss dynamics as the ratio of batch size
+to total number of samples decreases. Like the loss becomes too stochastic to properly descend. I think first thing
+tomorrow I should do is attempt to train on 500 samples with a batch size of 500. I want to see if that results in a 
+very good result.
+
 
 
 
