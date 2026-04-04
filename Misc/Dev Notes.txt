@@ -192,6 +192,21 @@ to total number of samples decreases. Like the loss becomes too stochastic to pr
 tomorrow I should do is attempt to train on 500 samples with a batch size of 500. I want to see if that results in a 
 very good result.
 
+4 Apr 2026:
+I started today with the idea that added mass may be playing a part in the issues I am seeing, but it turns out that
+the inertial box model which is default has no added mass. I did test_fluid_3_april_8 with 500 batch 500 subset size. 
+It performed exceedingly well. It clearly doesn't perfectly generalize outside of the 500 it was trained on, but it is 
+still to a level of quality I would be fine with presenting in those scenarios. I am going to see what happens when I 
+up the subset size to 5000, keeping everything else the same. It weirdly performs way less well than batch size of 100 
+and subset size of 1000. It did seem to have a sort of phase transition around step 800 where loss decreased much faster.
+Atctually I am pretty sure it performed to just about the exact same level as the 100 batch 1000 subset run. There seems
+to be a big connection between batch to dataset ratio and training performance. It is still 10 times worse than the
+previous run. The quality of the trajectories learned are not as good as the previous one, I think the generalization is
+slightly better but it is hard to tell. I want to try one run with a batch size of 1000 and subset size of 1000
+
+Okay so run 10 which had batch size 1000 1000 subset size is basically the same as test 8. I think I may try to start 
+with run 10 as a base and up the number of samples to 2000 with the same batch size. see how that goes. 
+
 
 
 

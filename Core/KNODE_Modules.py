@@ -117,8 +117,14 @@ class KNODE_Dynamics(eqx.Module):
         bf_force = vectors[: , 3:]
 #        print(bf_torque)
 #        print(bf_force)
+        
         world_torque = matmul_mapped(bf_to_world_mat , bf_torque)
         world_force = matmul_mapped(bf_to_world_mat , bf_force)
+#        print(world_torque)
+#        print(world_force)
+        
+#        print(bf_to_world_mat)
+#        poop()
         world_6_force = jnp.concatenate((world_torque , world_force) , 1)
         mjx_data = mjx_data.replace(xfrc_applied=world_6_force)
             

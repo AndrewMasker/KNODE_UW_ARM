@@ -142,7 +142,7 @@ def visualize_Trained_Model(model , model_options , training_options , loss_list
     init_states = {"qpos": jnp.array(d["qpos"][0 , :]) , "qvel": jnp.array(d["qvel"][0 , :])}
     ctrl = jnp.array(d["ctrl"][0 , :])
     
-#    model.knode_dynamics(0 , init_states , (mjx_data , ctrl , jnp.array(1.0)))
+    model.knode_dynamics(0 , init_states , (mjx_data , ctrl , jnp.array(1.0)))
     
     KNODE_traj = model(ts , mjx_data , init_states , ctrl , with_learned = jnp.array(1.0))
     KNODE_qpos_traj = np.array(KNODE_traj["qpos"])
