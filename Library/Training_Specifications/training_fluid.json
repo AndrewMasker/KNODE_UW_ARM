@@ -5,8 +5,8 @@
     "should_load": false , 
     "load_name": "test_fluid_3_april_4",
     
-    "batch_size": 1000 , 
-    "subset_size": 1000 , "_default": "None",
+    "batch_size": 10000 , 
+    "subset_size": 10000 , "_default": "None",
     "lr_strategy": [0.009 , 0.001] , "with sgd .01 and .005 work with different effects. with ADAM .0005 to .005 seem to work":"",
     "steps_strategy": [1 , 1] , 
     "num_batches_strategy": [2000 , 0] ,

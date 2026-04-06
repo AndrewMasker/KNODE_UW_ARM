@@ -207,6 +207,14 @@ slightly better but it is hard to tell. I want to try one run with a batch size 
 Okay so run 10 which had batch size 1000 1000 subset size is basically the same as test 8. I think I may try to start 
 with run 10 as a base and up the number of samples to 2000 with the same batch size. see how that goes. 
 
+5 Apr 2026:
+Last night I ran a 5000 batch 5000 subset and it performed pretty well, although not as good on its subset as smaller
+subsets. Its generalization is better. Will run a test on 10000 while out of town.
 
+6 Apr 2026:
+That run is pretty good. It also didn't go as low as the other subset. Generalization is about the same. It was the 12 run.
+
+Next step is to recode the original KNODE and set up sindy. I should probably work with the 1000 subset version, as it 
+takes a very small amount of time and performs very well.
 
 
