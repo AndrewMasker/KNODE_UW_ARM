@@ -26,7 +26,7 @@ def return_Arguments():
         path_to_dataset_specs = "/Library/Dataset_Specifications/" + sys.argv[1] + ".json"
     else:
         # Put default variables here
-        path_to_dataset_specs = "/Library/Dataset_Specifications/dataset_1_specs.json"
+        path_to_dataset_specs = "/Library/Dataset_Specifications/dataset_3_fluid_no_coll_valid_specs.json"
         
     return os.getcwd() + path_to_dataset_specs
     

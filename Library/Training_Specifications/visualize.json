@@ -1,9 +1,9 @@
 {
     "name": "test", 
-    "dataset_name": "dataset_3_fluid_no_coll",
+    "dataset_name": "dataset_3_fluid_no_coll_valid",
     "model_name": "mjx_panda",
     "should_load": true , 
-    "load_name": "test_fluid_3_april_12",
+    "load_name": "test_fluid_body_same", "test_fluid_3_april_12":"test_fluid_body_same",
     
     "batch_size": 100 , 
     "subset_size": "None" ,
@@ -26,6 +26,6 @@
     "step_size": "0.002" ,
     
     "print_every": 5 , 
-    "which_to_show_at_end": 10029 ,
+    "which_to_show_at_end": 3 ,
     "should_save": false
 }

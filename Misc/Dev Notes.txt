@@ -217,4 +217,9 @@ That run is pretty good. It also didn't go as low as the other subset. Generaliz
 Next step is to recode the original KNODE and set up sindy. I should probably work with the 1000 subset version, as it 
 takes a very small amount of time and performs very well.
 
+9 Apr 2026:
+I feel like I am going insane. I recoded the original KNODE and now it works better than my version. I'm gonna kms bruh.
+There were some differneces in the batch size, lr, and number of batches run, so I'll switch to that for my method and 
+see how it works. 
+
 

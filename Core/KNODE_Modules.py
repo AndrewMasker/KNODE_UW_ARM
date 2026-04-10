@@ -25,7 +25,7 @@ class Residual_Network(eqx.Module):
         keys = jr.split(key , body_num)
 #        self.out_scale = jnp.array(10.0) #500
         self.body_networks = []
-        for i in range(body_num):
+        for i in range(body_num-2):  #CHANGE HERE. REMOVE -2 TO GET BACK
             self.body_networks.append(eqx.nn.MLP(
                 in_size = 6, 
                 out_size = 6 , #output_num, 
@@ -57,7 +57,7 @@ class Residual_Network(eqx.Module):
         
         vectors = self.body_networks[0](y[0])
         vectors = jnp.expand_dims(vectors , 0)
-        for i in range(1 , self.body_num):
+        for i in range(1 , self.body_num - 2): # REMOVE -2
             vectors = jnp.concatenate((vectors , jnp.expand_dims(self.body_networks[i](y[i]) , 0)) , 0)
 #       
         return vectors#self.vectors#denormalized_output
@@ -90,10 +90,10 @@ class KNODE_Dynamics(eqx.Module):
         
 #        xquat = mjx_data.xquat
         cvel = mjx_data.cvel
-        world_w = cvel[:,:3]
-        world_v = cvel[:,3:]
+        world_w = cvel[2:,:3] #REMOVE 2
+        world_v = cvel[2:,3:] #REMOVE 2
         
-        bf_to_world_mat = mjx_data.ximat
+        bf_to_world_mat = mjx_data.ximat[2:,:,:] #REMOVE 2
         world_to_bf_mat = jnp.matrix_transpose(bf_to_world_mat)
 
         
@@ -126,6 +126,10 @@ class KNODE_Dynamics(eqx.Module):
 #        print(bf_to_world_mat)
 #        poop()
         world_6_force = jnp.concatenate((world_torque , world_force) , 1)
+        
+        pad = jnp.zeros((2, 6)) #REMOVE
+        world_6_force = jnp.concatenate((pad , world_6_force) , axis = 0) #REMOVE
+        
         mjx_data = mjx_data.replace(xfrc_applied=world_6_force)
             
 
