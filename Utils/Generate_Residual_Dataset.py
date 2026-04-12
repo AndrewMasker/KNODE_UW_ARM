@@ -109,7 +109,7 @@ def main(model_options , training_options , dataset_path):
         t = keys[trajectory_number]
         d = root[t]
         gt_qpos_traj = jnp.array(d["qpos"][:])
-        gt_qvel_traj = jnp.array(d["qpos"][:])
+        gt_qvel_traj = jnp.array(d["qvel"][:])
         states = {"qpos":gt_qpos_traj , "qvel":gt_qvel_traj}
 #        init_states = {"qpos": jnp.array(d["qpos"][0 , :]) , "qvel": jnp.array(d["qvel"][0 , :])}
         ctrl = jnp.array(d["ctrl"][0 , :])

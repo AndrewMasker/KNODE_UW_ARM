@@ -1,0 +1,16 @@
+{
+    "name": "test_fluid_body_same", 
+    "residual_dataset_name": "dataset_3_fluid_no_coll_res",
+    "should_load":false,
+    "load_name":"none",
+    
+    "subset_size": 100 , "_default": "None",
+    "num_inducing":1000,
+    
+    "l1":0.0005 ,
+    "l2": 589 , "_default_l2": "589" , "_l2_term":"qpos", 
+    "l4": 3.5 , "_default_l4": "3.5" , "_l4_term":"qvel",
+
+    "which_to_show_at_end": 0 , 
+    "should_save": true
+}

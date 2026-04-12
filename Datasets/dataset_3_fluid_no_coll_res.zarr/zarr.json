@@ -41,7 +41,7 @@
       "subset_size": 10000,
       "_default": "None",
       "lr_strategy": [
-        0.009,
+        0.005,
         0.001
       ],
       "with sgd .01 and .005 work with different effects. with ADAM .0005 to .005 seem to work": "",
@@ -50,7 +50,7 @@
         1
       ],
       "num_batches_strategy": [
-        10,
+        20000,
         0
       ],
       "must use 20000 to compensate": "",
