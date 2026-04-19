@@ -1,0 +1,43 @@
+{
+  "name"               : "Generalization_Runs/fsindy_1000",
+  "model_name"         : "mjx_panda",
+
+  "sindy_dataset_name" : "dataset_3_fluid_no_coll_res",
+
+  "num_fourier_features": 10000,
+  "coeff_std"           : 0.5,
+
+  "sindy_optimizer"    : "stlsq",
+  "sindy_threshold"    : 0.5,
+  "sindy_alpha"        : 1e-5,
+  "sindy_nu"           : 1.0,
+  "sindy_max_iter"     : 200,
+
+  "subset_size"        : 1000,
+  "max_samples"        : 10000,
+
+  "is_gravity"         : true,
+  "is_fluid"           : false,
+  "is_const_wind"      : true,
+  "wind"               : "0 0 0",
+  "density"            : "1000",
+  "viscosity"          : "0.00002",
+  "step_size"          : "0.002",
+
+  "l2"                 : 589,
+  "l4"                 : 3.5,
+
+  "should_save"        : true,
+  "should_show"        : false,
+  "should_plot"        : false,
+  "which_to_show_at_end": 5,
+
+  "_notes": {
+    "num_fourier_features": "Larger → denser Θ, more expressive but slower fit and more memory. 1000–5000 is typical.",
+    "coeff_std"           : "Controls RFF frequency bandwidth. Match to the expected spectral content of the residual.",
+    "sindy_threshold"     : "Main sparsity knob. Set just above the noise floor of |Ξ| magnitudes.",
+    "sindy_alpha"         : "Ridge regularisation for STLSQ. Increase if Θ is ill-conditioned.",
+    "sindy_nu"            : "SR3 relaxation. Smaller → more aggressive sparsity.",
+    "max_samples"         : "Cap dataset size for memory/speed. null = use all."
+  }
+}

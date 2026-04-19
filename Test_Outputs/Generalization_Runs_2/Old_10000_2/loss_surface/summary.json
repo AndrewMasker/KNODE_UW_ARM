@@ -1,0 +1,15 @@
+{
+  "param_a_flat_idx": 91389,
+  "param_b_flat_idx": 792501,
+  "param_a_label": "leaf[2] shape=(500, 500) elem[77889]",
+  "param_b_label": "leaf[8] shape=(500, 500) elem[27501]",
+  "param_a_value": 0.1386783868074417,
+  "param_b_value": 0.179570734500885,
+  "current_loss": 0.015395862981677055,
+  "grid_min_loss": 0.015393950045108795,
+  "grid_max_loss": 0.015396593138575554,
+  "grid_resolution": 25,
+  "perturbation_scale": 0.5,
+  "total_trainable_params": 1023962,
+  "num_trajectories": 50
+}

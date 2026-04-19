@@ -1,0 +1,53 @@
+{
+  "model_type": "old",
+  "save_name": "Generalization_Runs_2/Old_10000",
+  "load_name": "Compare_Runs/Old_Method",
+  "model_name": "mjx_panda",
+  "is_gravity": true,
+  "is_fluid": false,
+  "is_const_wind": true,
+  "wind": "0 0 0",
+  "density": "1000",
+  "viscosity": "0.00002",
+  "step_size": "0.002",
+  "jobs": {
+    "validation_statistics": {
+      "type": "statistics",
+      "dataset_name": "dataset_3_fluid_no_coll_valid",
+      "subset_size": "None",
+      "_default": "None",
+      "batch_size": 1000,
+      "should_save": true
+    },
+    "acc_landscape_j5_j6": {
+      "type": "acc_landscape",
+      "vary_joints": [
+        5,
+        6
+      ],
+      "grid_resolution": 50,
+      "joint_range_frac": 1.0,
+      "should_save": true
+    },
+    "acc_landscape_j2_j3": {
+      "type": "acc_landscape",
+      "vary_joints": [
+        2,
+        3
+      ],
+      "grid_resolution": 50,
+      "joint_range_frac": 0.8,
+      "should_save": true
+    },
+    "loss_surface": {
+      "type": "loss_surface",
+      "dataset_name": "dataset_3_fluid_no_coll",
+      "subset_size": 50,
+      "batch_size": 50,
+      "grid_resolution": 25,
+      "perturbation_scale": 0.5,
+      "seed": 42,
+      "should_save": true
+    }
+  }
+}

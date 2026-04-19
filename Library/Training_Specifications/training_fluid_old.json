@@ -27,5 +27,6 @@
     
     "print_every": 5 , 
     "which_to_show_at_end": 0 , 
-    "should_save": true
+    "should_save": true , 
+    "should_plot":false
 }

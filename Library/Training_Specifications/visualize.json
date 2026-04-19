@@ -26,6 +26,7 @@
     "step_size": "0.002" ,
     
     "print_every": 5 , 
-    "which_to_show_at_end": 3 ,
-    "should_save": false
+    "which_to_show_at_end": 7 ,
+    "should_save": false , 
+    "should_plot":true
 }

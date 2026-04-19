@@ -1,0 +1,55 @@
+{
+  "model_type": "new",
+  "save_name": "Generalization_Runs/New_100",
+  "load_name": "Generalization_Runs/New_100",
+  "model_name": "mjx_panda",
+  "is_gravity": true,
+  "is_fluid": false,
+  "is_const_wind": true,
+  "wind": "0 0 0",
+  "density": "1000",
+  "viscosity": "0.00002",
+  "step_size": "0.002",
+  "jobs": {
+    "validation_statistics": {
+      "type": "statistics",
+      "dataset_name": "dataset_3_fluid_no_coll_valid",
+      "subset_size": "None",
+      "_default": "None",
+      "batch_size": 1000,
+      "should_save": true
+    },
+    "validation_visualize": {
+      "type": "visualize",
+      "dataset_name": "dataset_3_fluid_no_coll_valid",
+      "which_to_visualize": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "should_save": true
+    },
+    "phase_portrait": {
+      "type": "phase_portrait",
+      "dataset_name": "dataset_3_fluid_no_coll_valid",
+      "subset_size": 20,
+      "which_joints": null,
+      "should_save": true
+    },
+    "error_distribution": {
+      "type": "error_distribution",
+      "dataset_name": "dataset_3_fluid_no_coll_valid",
+      "subset_size": 200,
+      "batch_size": 100,
+      "should_save": true
+    },
+    "frequency_analysis": {
+      "type": "frequency_analysis",
+      "dataset_name": "dataset_3_fluid_no_coll_valid",
+      "subset_size": 200,
+      "batch_size": 100,
+      "should_save": true
+    }
+  }
+}

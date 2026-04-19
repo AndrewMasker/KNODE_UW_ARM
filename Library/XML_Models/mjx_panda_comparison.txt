@@ -6,6 +6,10 @@
     
     <!-- TIMESTEP_FLAG -->
     
+  <visual>
+    <global offwidth="2560" offheight="1440"/>
+  </visual>
+    
     
   <compiler angle="radian" meshdir="Library/XML_Models/mjx_panda_assets" autolimits="true"/>
 

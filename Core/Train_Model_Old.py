@@ -161,8 +161,12 @@ def visualize_Trained_Model(model , model_options , training_options , loss_list
     
     
              
+    print("Learned Loss")         
     print(l2*jnp.mean((KNODE_traj["qpos"] - gt_qpos_traj)**2) + l4*jnp.mean((KNODE_traj["qvel"] - d["qvel"][:])**2))
+    print("Nominal Loss")
+    print(l2*jnp.mean((nominal_traj["qpos"] - gt_qpos_traj)**2) + l4*jnp.mean((nominal_traj["qvel"] - d["qvel"][:])**2))
     
+
 
     
     fig , (ax1 , ax2 , ax3 , ax4 , ax5 , ax6) = plt.subplots(1 , 6)
@@ -200,10 +204,7 @@ def visualize_Trained_Model(model , model_options , training_options , loss_list
     
     mj_utils.visualize_GT_vs_Nominal_vs_KNODE_Trajectory(training_options["model_name"] , gt_qpos_traj , nominal_qpos_traj , KNODE_qpos_traj)
     
-#def plot_Loss(loss_list ):#, save_path):
-#    save_path = save_path + "/Plots"
-#    os.make_dirs(save_path)
-#    
+
 
     
     
@@ -284,20 +285,13 @@ def trajectory_Train(model , mjx_data , num_batches , steps_strategy , lr , trai
                l3*jnp.mean((pred_cvel_trajs - gt_cvel_trajs)**2) + 
                l4*jnp.mean((pred_qvel_trajs - gt_qvel_trajs)**2))
                
-#            return (l2*jnp.mean((pred_qpos_trajs - gt_qpos_trajs)**2) + 
-#                    l4*jnp.mean((pred_qvel_trajs - gt_qvel_trajs)**2))
-#                   
+                 
     
     @eqx.filter_jit
     def make_step(model , ts , gt_trajs , ctrls , mjx_data , opt_state):
         diff_model , static_model = eqx.partition(model , filter_spec)
         init_states = {"qpos": gt_trajs["qpos"][: , 0 , :] , "qvel": gt_trajs["qvel"][: , 0 , :]}
         loss , grads = grad_loss(diff_model , static_model , ts , gt_trajs , ctrls , mjx_data , init_states)
-#            print(grads.knode_dynamics.residual_network.out_scale)
-#            print(grads.knode_dynamics.residual_network.mlp.layers[0].weight)
-#            print(grads.knode_dynamics.mjx_mixing_matrix)
-#            print(grads.knode_dynamics.res_mixing_matrix)
-#            poop()
         updates , opt_state = optim.update(grads , opt_state)
         diff_model = eqx.apply_updates(diff_model , updates)
         model = eqx.combine(diff_model , static_model)
@@ -311,8 +305,6 @@ def trajectory_Train(model , mjx_data , num_batches , steps_strategy , lr , trai
         gt_trajs = jtu.tree_map(jax.device_put , gt_trajs)
         ctrls = jax.device_put(ctrls)
         _ts = ts[0:_num_steps]
-#        key = jr.key(int(time.time()))
-#        start_step = int(jr.randint(key , (1,) , minval = 0 , maxval = num_steps - _num_steps)[0])
         _gt_trajs = {"qpos": gt_trajs["qpos"][: , 0:_num_steps , :] , "qvel": gt_trajs["qvel"][: , 0:_num_steps , :]}
         loss , model , opt_state = make_step(model , _ts , _gt_trajs , ctrls , mjx_data , opt_state)
         
@@ -339,22 +331,12 @@ def train_Model(model_options , training_options):
     filter_spec = eqx.tree_at(lambda tree: tree.knode_dynamics.residual_network.mlp,
                       filter_spec , 
                       replace = True)
-#    filter_spec = eqx.tree_at(lambda tree: tree.knode_dynamics.residual_network.out_scale,
+#    filter_spec = eqx.tree_at(lambda tree: tree.knode_dynamics.mjx_mixing_matrix,
 #                      filter_spec , 
 #                      replace = True)
-    filter_spec = eqx.tree_at(lambda tree: tree.knode_dynamics.mjx_mixing_matrix,
-                      filter_spec , 
-                      replace = True)
     filter_spec = eqx.tree_at(lambda tree: tree.knode_dynamics.res_mixing_matrix,
                       filter_spec , 
                       replace = True)
-#    filter_spec = eqx.tree_at(lambda tree: tree.knode_dynamics.residual_network.vectors,
-#                      filter_spec , 
-#                      replace = True)
-#    filter_spec = eqx.tree_at(lambda tree: tree.knode_dynamics.residual_network.body_networks,
-#                      filter_spec , 
-#                      replace = True)
-#    
     
     
     for num_batches , steps_strategy , lr in zip(training_options["num_batches_strategy"] , training_options["steps_strategy"] , training_options["lr_strategy"]):
@@ -382,8 +364,9 @@ if __name__ == "__main__":
     if training_options["should_save"]:
         save_path = save_Model(model , loss_list , model_options , training_options)
 #    plot_Loss(loss_list)
-    visualize_Trained_Model(model , model_options , training_options , loss_list)
-    plt.show()
+    if training_options["should_plot"]:
+        visualize_Trained_Model(model , model_options , training_options , loss_list)
+        plt.show()
     
     
     
