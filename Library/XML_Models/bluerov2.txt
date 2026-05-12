@@ -1,0 +1,22 @@
+<mujoco model="bluerov2">
+    <asset>
+        <mesh name="bluerov_mesh" file="bluerov2_assets/BlueRov2.stl" scale="1 1 1"/>
+    </asset>
+
+    <option gravity="0 0 0"/>
+
+    <worldbody>
+        <body name="base_link" pos="0 0 0">
+            <freejoint name="float"/>
+            <inertial pos="0 0 0" mass="11" diaginertia="1 1 1" />
+            
+            <geom type="mesh" mesh="bluerov_mesh" />
+            
+            <geom type="box" size="0.228 0.169 0.127" rgba="0 0 0 0" density="1000"/>
+
+            <body name="camera_link" pos="0 0.21 -0.067" quat="0 0 0 1">
+                <camera name="main_camera" fovy="62"/>
+            </body>
+        </body>
+    </worldbody>
+</mujoco>

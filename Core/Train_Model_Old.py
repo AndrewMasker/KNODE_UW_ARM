@@ -257,33 +257,16 @@ def trajectory_Train(model , mjx_data , num_batches , steps_strategy , lr , trai
     def grad_loss(diff_model , static_model , ts , gt_trajs , ctrls , mjx_data , init_states):
         model = eqx.combine(diff_model , static_model)
         pred_trajs = jax.vmap(model , (None , None , 0 , 0 , None))(ts , mjx_data , init_states , ctrls , jnp.array(1.0))
-        get_data = lambda given_qpos , given_qvel : mjx.com_vel(model.knode_dynamics.mjx_model , mjx.com_pos(model.knode_dynamics.mjx_model , mjx.kinematics(model.knode_dynamics.mjx_model , mjx_data.replace(qpos=given_qpos , qvel=given_qvel))))
-        get_data_traj = jax.vmap(jax.vmap(get_data , in_axes = (0 , 0) , out_axes = 0) , in_axes = (0 , 0) , out_axes = 0)
 
-        pred_data_trajs = get_data_traj(pred_trajs["qpos"]  , pred_trajs["qvel"])
-        gt_data_trajs = get_data_traj(gt_trajs["qpos"] , gt_trajs["qvel"])
-        
-        pred_xpos_trajs = pred_data_trajs.xpos
-        gt_xpos_trajs = gt_data_trajs.xpos
-        
-        pred_xquat_trajs = pred_data_trajs.xquat
-        gt_xquat_trajs = gt_data_trajs.xquat
         
         pred_qpos_trajs = pred_trajs["qpos"]
         gt_qpos_trajs = gt_trajs["qpos"]
         
-        pred_cvel_trajs = pred_data_trajs.cvel
-        gt_cvel_trajs = gt_data_trajs.cvel
-        
         pred_qvel_trajs = pred_trajs["qvel"]
         gt_qvel_trajs = gt_trajs["qvel"]
         
-#            
-        return(l0*jnp.mean((pred_xpos_trajs - gt_xpos_trajs)**2) + 
-               l1*jnp.mean((pred_xquat_trajs - gt_xquat_trajs)**2) + 
-               l2*jnp.mean((pred_qpos_trajs - gt_qpos_trajs)**2) + 
-               l3*jnp.mean((pred_cvel_trajs - gt_cvel_trajs)**2) + 
-               l4*jnp.mean((pred_qvel_trajs - gt_qvel_trajs)**2))
+               
+        return l2*jnp.mean((pred_qpos_trajs - gt_qpos_trajs)**2) + l4*jnp.mean((pred_qvel_trajs - gt_qvel_trajs)**2)
                
                  
     

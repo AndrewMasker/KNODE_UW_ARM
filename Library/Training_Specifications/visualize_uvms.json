@@ -1,0 +1,29 @@
+{
+    "name": "test_uvms", 
+    "dataset_name": "uvms_no_coll",
+    "model_name": "bluerov2_arm",
+    "should_load": true , 
+    "load_name": "test_uvms",
+    
+    "batch_size": 100 , 
+    "subset_size": "None" , "_default": "None",
+    "lr_strategy": [0.001 , 0.001] , "with sgd .01 and .005 work with different effects. with ADAM .0005 to .005 seem to work":"",
+    "steps_strategy": [1 , 1] , 
+    "num_batches_strategy": [0 , 0] , "must use 20000 to compensate":"",
+    "l2": 12.47 , "_default_l2": "12.47" , "_l2_term":"qpos", 
+    "l4": 0.125 , "_default_l4": "0.125" , "_l4_term":"qvel",
+    "l5": 1.0 , 
+    
+    "is_gravity": true , 
+    "is_fluid": false , 
+    "is_const_wind": true ,
+    "wind": "0 0 0" , 
+    "density": "1000" , 
+    "viscosity": "0.00002" , 
+    "step_size": "0.002" ,
+    
+    "print_every": 5 , 
+    "which_to_show_at_end": 2 , 
+    "should_save": false , 
+    "should_plot":true
+}

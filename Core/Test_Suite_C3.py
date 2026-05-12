@@ -88,6 +88,27 @@ def load_Old_Model(test_options):
     load_path = os.getcwd() + "/Models/" + test_options["load_name"] + "/"
     model     = eqx.tree_deserialise_leaves(load_path + "model.eqx", model)
     return model, mjx_data, mjx_model
+    
+    
+def load_UVMS_Model(test_options):
+    from Core.KNODE_Modules_UVMS import KNODE
+
+    training_options = get_Training_Options(test_options)
+    model_options    = get_Model_Options(test_options)
+
+    dataset_path = "Datasets/" + training_options["dataset_name"] + ".zarr"
+    root         = zarr.open(dataset_path)
+    qvel_max     = jnp.array(root.attrs["dataset_options"]["qvel_max"])
+
+    model_xml            = mj_utils.create_XML_From_Options(training_options)
+    mjx_model, mjx_data  = mj_utils.init_mjx_model(model_xml)
+
+    key   = jr.key(int(time.time()))
+    model = KNODE(key, mjx_model, model_options["width"], model_options["depth"], qvel_max)
+
+    load_path = os.getcwd() + "/Models/" + test_options["load_name"] + "/"
+    model     = eqx.tree_deserialise_leaves(load_path + "model.eqx", model)
+    return model, mjx_data, mjx_model
 
 
 def load_New_Model(test_options):
@@ -1685,6 +1706,8 @@ def main():
         model, mjx_data, mjx_model = load_Fourier_Model(test_options)
     elif model_type == "fsindy":
         model, mjx_data, mjx_model = load_FSINDy_Model(test_options)
+    elif model_type == "uvms":
+        model, mjx_data, mjx_model = load_UVMS_Model(test_options)
     else:
         raise ValueError(f"Unknown model_type '{model_type}'.")
 

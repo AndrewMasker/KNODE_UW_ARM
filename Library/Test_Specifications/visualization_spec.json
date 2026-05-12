@@ -1,0 +1,15 @@
+{
+    "dataset_name": "dataset_3_fluid_no_coll_valid",
+    "trajectory_index": 2,
+    "comparison_xml_name": "mjx_panda_5_solid",
+
+    "old": {
+        "load_name": "Generalization_Runs/Old_50000"
+    },
+    "gp": {
+        "load_name": "Generalization_Runs/gp_50000"
+    },
+    "fsindy": {
+        "load_name": "Generalization_Runs/fsindy_50000"
+    }
+}

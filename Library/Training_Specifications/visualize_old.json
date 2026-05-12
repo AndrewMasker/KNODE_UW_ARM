@@ -3,7 +3,7 @@
     "dataset_name": "dataset_3_fluid_no_coll_valid",
     "model_name": "mjx_panda",
     "should_load": true , 
-    "load_name": "test_fluid_old_3", "test_fluid_3_april_12":"test_fluid_old_3",
+    "load_name": "Generalization_Runs/Old_50000", "test_fluid_3_april_12":"test_fluid_old_3",
     
     "batch_size": 100 , 
     "subset_size": "None" ,

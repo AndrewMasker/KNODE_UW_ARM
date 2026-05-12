@@ -69,6 +69,7 @@ def visualize_Saved_Trajectory(dataset_name , trajectory_number):
     qpos_traj = d["qpos"][:]
     ctrl_traj = d["ctrl"][:]
     
+    
     with mj_viewer.launch_passive(model , data) as viewer:
         while viewer.is_running():
             for i in range(qpos_traj.shape[0]):

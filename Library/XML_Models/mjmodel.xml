@@ -1,0 +1,37 @@
+<mujoco model="alpha_5_example">
+  <compiler angle="radian"/>
+
+  <worldbody>
+    <geom size="0.02 0.05" pos="-0.075 -0.004 0" quat="0.707123 0 0.70709 0" type="cylinder" rgba="0.3 0.3 0.3 1"/>
+    <body name="alpha_m2_1_1_link" pos="0 0 0.014">
+      <inertial pos="0.005 -0.001 0.016" quat="0.493 0.150959 0.129159 0.847042" mass="0.194" diaginertia="0.000160792 0.000153266 4.5492e-05"/>
+      <joint name="alpha_axis_e" pos="0 0 0" axis="0 0 1" range="0 6.3" actuatorfrcrange="-9 9"/>
+      <geom size="0.02 0.033" type="cylinder" rgba="0.3 0.3 0.3 1"/>
+      <body name="alpha_m2_joint_link" pos="-0.02 0 0.033">
+        <inertial pos="0.073563 -9.1e-05 -0.000734" quat="0.00776213 0.699042 -0.0571666 0.71275" mass="0.429" diaginertia="0.000891756 0.000874931 7.97737e-05"/>
+        <joint name="alpha_axis_d" pos="0 0 0" axis="0 1 0" range="0 3.8" actuatorfrcrange="-9 9"/>
+        <geom size="0.02 0.0725" pos="-0.02 0 -0.0725" type="cylinder" rgba="0.3 0.3 0.3 1"/>
+        <geom size="0.02 0.02" quat="0.707141 0.707073 0 0" type="cylinder" rgba="0.3 0.3 0.3 1"/>
+        <geom size="0.02 0.02" pos="-0.04 0 -0.1453" quat="0.707141 0.707073 0 0" type="cylinder" rgba="0.3 0.3 0.3 1"/>
+        <body name="alpha_m2_1_2_link" pos="-0.04 0 -0.1453" quat="1.32679e-06 0 0 1">
+          <inertial pos="0.017 -0.026 0.002" quat="0.468757 0.796138 -0.119998 0.363361" mass="0.115" diaginertia="4.87498e-05 4.58832e-05 2.04871e-05"/>
+          <joint name="alpha_axis_c" pos="0 0 0" axis="0 1 0" range="0.2 3.4" actuatorfrcrange="-9 9"/>
+          <geom size="0.02 0.0165" pos="0.02 0 0.0165" type="cylinder" rgba="0.3 0.3 0.3 1"/>
+          <body name="alpha_m1_link" pos="0.02 0 0.033" quat="0.500002 0 0 0.866024">
+            <inertial pos="-3e-05 -0.003 -0.098" quat="0.697043 0.0662033 -0.0757968 0.709931" mass="0.333" diaginertia="0.000555862 0.000507913 5.59645e-05"/>
+            <joint name="alpha_axis_b" pos="0 0 0" axis="0 0 -1" range="0 6.2" actuatorfrcrange="-9 9"/>
+            <geom size="0.02 0.054875" pos="0 0 0.054875" type="cylinder" rgba="0.3 0.3 0.3 1"/>
+            <body name="alpha_standard_jaws_rs1_130_link" pos="0 0.0155 0.10665">
+              <joint name="alpha_standard_jaws_rs1_130_joint" pos="0 0 0" axis="-1 0 0" range="0 0.5" actuatorfrcrange="-10 10"/>
+              <geom size="0.006 0.015 0.045" pos="0 -0.008 0.045" type="box" rgba="0.3 0.3 0.3 1"/>
+            </body>
+            <body name="alpha_standard_jaws_rs1_139_link" pos="0 -0.0155 0.10665">
+              <joint name="alpha_standard_jaws_rs1_139_joint" pos="0 0 0" axis="1 0 0" range="0 0.5" actuatorfrcrange="-10 10"/>
+              <geom size="0.006 0.015 0.045" pos="0 0.008 0.045" type="box" rgba="0.3 0.3 0.3 1"/>
+            </body>
+          </body>
+        </body>
+      </body>
+    </body>
+  </worldbody>
+</mujoco>

@@ -1,0 +1,32 @@
+{
+    "name": "test", 
+    "dataset_name": "dataset_3_fluid_no_coll_valid",
+    "model_name": "mjx_panda",
+    "should_load": true , 
+    "load_name": "test_fluid_body_same", "test_fluid_3_april_12":"test_fluid_body_same",
+    
+    "batch_size": 100 , 
+    "subset_size": "None" ,
+    "lr_strategy": [0.0001 , 0.0001] ,
+    "steps_strategy": [0.3 , 0.3] , 
+    "num_batches_strategy": [0 , 0] ,
+    "l0": 0 , "_default_l0": "2703" , "_10_term":"xpos",
+    "l1": 0 , "_default_l1": "1945" , "_l1_term":"xquat",
+    "l2": 589 , "_default_l2": "589" , "_l2_term":"qpos", 
+    "l3": 0.0 , "_default_l3": "4.24" , "_l3_term":"cvel", 
+    "l4": 3.5 , "_default_l4": "3.5" , "_l4_term":"qvel",
+    "l5": 1.0 , 
+   
+    "is_gravity": true , 
+    "is_fluid": false , 
+    "is_const_wind": true ,
+    "wind": "0 0 0" , 
+    "density": "1000" , 
+    "viscosity": "0.00002" , 
+    "step_size": "0.002" ,
+    
+    "print_every": 5 , 
+    "which_to_show_at_end": 7 ,
+    "should_save": false , 
+    "should_plot":true
+}

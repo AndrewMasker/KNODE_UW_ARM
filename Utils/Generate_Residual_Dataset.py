@@ -8,7 +8,7 @@ import argparse
 #import grain
 
 from Core.Dataset_Generation import get_New_Name
-from Core.Train_Model import load_Model_From_Options
+from Core.Train_Model_UVMS import load_Model_From_Options #This will need to be changed depending on which type
 import jax
 import jax.numpy as jnp
 #import jax.random as jr
@@ -31,8 +31,8 @@ import zarr
 def return_Arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument("-m" , "--model_specs" , type = str , default = "model_scalped")
-    parser.add_argument("-t" , "--training_specs" , type = str , default = "training_fluid_old")
-    parser.add_argument("-d" , "--dataset_name" , type = str , default = "dataset_3_fluid_no_coll")
+    parser.add_argument("-t" , "--training_specs" , type = str , default = "training_fluid_uvms")
+    parser.add_argument("-d" , "--dataset_name" , type = str , default = "uvms_no_coll")
     
     args = parser.parse_args()
     

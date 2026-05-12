@@ -1,0 +1,31 @@
+{
+  "name": "gp_fluid",
+  "model_name": "mjx_panda",
+  "sindy_dataset_name": "dataset_3_fluid_no_coll_res",
+  "num_training_points": 2000,
+  "gp_lr": 0.01,
+  "gp_num_iters": 10000,
+  "gp_jitter": 1e-06,
+  "subset_size": 50000,
+  "max_samples": 2000,
+  "is_gravity": true,
+  "is_fluid": false,
+  "is_const_wind": true,
+  "wind": "0 0 0",
+  "density": "1000",
+  "viscosity": "0.00002",
+  "step_size": "0.002",
+  "l2": 589,
+  "l4": 3.5,
+  "should_save": true,
+  "should_show": true,
+  "should_plot": true,
+  "which_to_show_at_end": 5,
+  "_notes": {
+    "num_training_points": "Number of points sub-sampled for the GP. O(n^3) cost, so 1000-3000 is practical. More points = better accuracy but slower fitting and prediction.",
+    "gp_lr": "Adam learning rate for kernel hyperparameter optimisation.",
+    "gp_num_iters": "Gradient steps on the marginal log-likelihood per DOF. 300-1000 is typical.",
+    "gp_jitter": "Small diagonal addition for Cholesky stability. Increase if you hit numerical issues.",
+    "max_samples": "Cap on total residual samples loaded before GP sub-sampling. null = use all."
+  }
+}
